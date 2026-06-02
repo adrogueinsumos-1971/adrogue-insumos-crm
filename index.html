@@ -651,11 +651,16 @@ body {
         <div class="field">
           <label>Cantidad <span class="req">*</span></label>
           <select id="p-cantidad" onchange="updateCalcPreview()">
+            <option value="4">4</option>
             <option value="5">5</option>
             <option value="6">6</option>
+            <option value="10">10</option>
             <option value="12">12</option>
             <option value="20">20</option>
+            <option value="22">22</option>
+            <option value="25">25</option>
             <option value="30">30</option>
+            <option value="100">100</option>
             <option value="205">205</option>
           </select>
         </div>
@@ -1217,7 +1222,7 @@ async function saveProducto() {
   if (precioUnit <= 0) { document.getElementById('p-precio-err').classList.remove('hidden'); valid = false; }
   else document.getElementById('p-precio-err').classList.add('hidden');
   if (!valid) return;
-  const cantidad = parseInt(document.getElementById('p-cantidad').value);
+  const cantidad = parseInt(document.getElementById('p-cantidad').value) || 5;
   const body = {
     nombre,
     presentacion_tipo: document.getElementById('p-tipo').value,
