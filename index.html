@@ -999,11 +999,9 @@ function renderProductos(list) {
     el.innerHTML = `<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">Sin productos</div><div class="empty-sub">Agregá tu primer producto para comenzar</div><button class="btn-sm" onclick="showForm('producto')">Agregar Producto</button></div>`;
     return;
   }
-  const iconMap = { Bidon: '🥤', Balde: '🪣', Bolsa: '🛍', Pack: '📦', Tambor: '🛢' };
   el.innerHTML = list.map(p => `
     <div class="card">
       <div class="card-header">
-        <div class="avatar" style="background:var(--bg);font-size:24px">${iconMap[p.presentacion_tipo] || '📦'}</div>
         <div class="card-info">
           <div class="card-name">${p.nombre}</div>
           <div class="card-sub">${p.presentacion_tipo} · ${p.presentacion_cantidad} ${p.unidad_medida}</div>
