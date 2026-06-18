@@ -100,7 +100,7 @@ body {
   background: none; border: none; cursor: pointer; line-height: 1; padding: 4px 8px 4px 0;
 }
 .header-action {
-  color: var(--white); font-size: 20px; font-weight: 700;
+  color: var(--white); font-size: 13px; font-weight: 700;
   background: none; border: none; cursor: pointer; padding: 4px;
 }
 .header-add {
@@ -410,6 +410,20 @@ body {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .hidden { display: none !important; }
+/* ── PRESUPUESTO/PEDIDO ── */
+.badge-presupuesto { background: #EDE9FE; color: #7C3AED; border: 1px solid #7C3AED; }
+.badge-pedido { background: #DBEAFE; color: #1D4ED8; border: 1px solid #1D4ED8; }
+.badge-cobrado { background: var(--delivered-bg); color: var(--success); border: 1px solid var(--success); }
+.badge-por-cobrar { background: #FEF3C7; color: #B45309; border: 1px solid #B45309; }
+.convert-btn { width: 100%; padding: 14px; background: var(--navy); color: var(--white); border: none; border-radius: var(--radius-sm); font-size: 15px; font-weight: 800; cursor: pointer; font-family: "Barlow", sans-serif; margin-bottom: 12px; letter-spacing: 0.3px; }
+.pdf-btn { width: 100%; padding: 12px; background: #7C3AED; color: var(--white); border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 700; cursor: pointer; font-family: "Barlow", sans-serif; margin-bottom: 8px; }
+/* ── PDF PRINT ── */
+@media print {
+  .bottom-nav, .header, .card-actions, .convert-btn, .pdf-btn, .btn-estado { display: none !important; }
+  body { background: white; padding: 0; }
+  .detail-section { box-shadow: none; border: 1px solid #ddd; }
+  #print-area { display: block !important; }
+}
 </style>
 </head>
 <body>
@@ -472,15 +486,35 @@ body {
           <div class="stat-value" id="dash-productos" style="color:#7C3AED">—</div>
           <div class="stat-label">Productos</div>
         </div>
+        <div class="stat-card" style="border-left-color:#9333EA" onclick="goTo('pedidos')">
+          <div class="stat-icon">📋</div>
+          <div class="stat-value" id="dash-presup-pend" style="color:#9333EA">—</div>
+          <div class="stat-label">Presup. Pendientes</div>
+        </div>
+        <div class="stat-card" style="border-left-color:#6D28D9" onclick="goTo('pedidos')">
+          <div class="stat-icon">✔</div>
+          <div class="stat-value" id="dash-presup-apro" style="color:#6D28D9">—</div>
+          <div class="stat-label">Presup. Aprobados</div>
+        </div>
         <div class="stat-card" style="border-left-color:#D97706" onclick="goTo('pedidos')">
           <div class="stat-icon">⏳</div>
           <div class="stat-value" id="dash-pendientes" style="color:#D97706">—</div>
-          <div class="stat-label">Pendientes</div>
+          <div class="stat-label">Pedidos Pend. Entrega</div>
         </div>
         <div class="stat-card" style="border-left-color:#16A34A" onclick="goTo('pedidos')">
           <div class="stat-icon">✅</div>
           <div class="stat-value" id="dash-entregados" style="color:#16A34A">—</div>
-          <div class="stat-label">Entregados</div>
+          <div class="stat-label">Pedidos Entregados</div>
+        </div>
+        <div class="stat-card" style="border-left-color:#B45309" onclick="goTo('pedidos')">
+          <div class="stat-icon">💰</div>
+          <div class="stat-value" id="dash-por-cobrar" style="color:#B45309">—</div>
+          <div class="stat-label">Pend. de Cobro</div>
+        </div>
+        <div class="stat-card" style="border-left-color:#059669" onclick="goTo('pedidos')">
+          <div class="stat-icon">💵</div>
+          <div class="stat-value" id="dash-cobrados" style="color:#059669">—</div>
+          <div class="stat-label">Pedidos Cobrados</div>
         </div>
       </div>
       <div class="section-title">Acciones rápidas</div>
@@ -540,9 +574,13 @@ body {
         <input type="text" placeholder="Buscar por número o cliente..." id="search-pedidos" oninput="filterPedidos()">
       </div>
       <div class="filter-row">
-        <button class="chip active" onclick="setPedidoFilter('')" id="chip-all">Todos</button>
-        <button class="chip" onclick="setPedidoFilter('Pendiente')" id="chip-pendiente">⏳ Pendientes</button>
-        <button class="chip" onclick="setPedidoFilter('Entregado')" id="chip-entregado">✅ Entregados</button>
+        <button class="chip active" onclick="setDocFilter('')" id="chip-all">Todos</button>
+        <button class="chip" onclick="setDocFilter('Presupuesto')" id="chip-presupuesto">📋 Presupuestos</button>
+        <button class="chip" onclick="setDocFilter('Pedido')" id="chip-pedido">🛒 Pedidos</button>
+        <button class="chip" onclick="setDocFilter('Pendiente')" id="chip-pendiente">⏳ Pendientes</button>
+        <button class="chip" onclick="setDocFilter('Entregado')" id="chip-entregado">✅ Entregados</button>
+        <button class="chip" onclick="setDocFilter('Para cobrar')" id="chip-por-cobrar">💰 Por cobrar</button>
+        <button class="chip" onclick="setDocFilter('Cobrado')" id="chip-cobrado">✔ Cobrados</button>
       </div>
       <div class="list-header">
         <div class="list-count" id="count-pedidos">0 pedidos</div>
@@ -731,9 +769,19 @@ body {
         <div class="total-card-label">Total del pedido</div>
         <div class="total-card-value" id="pedido-total-display">$0</div>
       </div>
+      <div class="form-section" style="margin-top:0">
+        <div class="form-section-title">📄 Tipo de documento</div>
+        <div class="field">
+          <label>Crear como <span class="req">*</span></label>
+          <select id="ped-tipo-doc" onchange="updateTipoDoc()">
+            <option value="Presupuesto">📋 Presupuesto</option>
+            <option value="Pedido">🛒 Pedido</option>
+          </select>
+        </div>
+      </div>
       <div class="form-actions">
         <button class="btn-outline" onclick="cancelForm()">Cancelar</button>
-        <button class="btn-primary" onclick="savePedido()">Crear Pedido</button>
+        <button class="btn-primary" id="btn-save-pedido" onclick="savePedido()">Crear Presupuesto</button>
       </div>
     </div>
   </div>
@@ -909,7 +957,7 @@ async function loadProductos() {
 
 async function loadPedidos() {
   try {
-    allPedidos = await api('GET', 'pedidos?order=created_at.desc&select=*,cliente:clientes(id,nombre,localidad,zona)') || [];
+    allPedidos = await api('GET', 'pedidos?order=created_at.desc&select=*,cliente:clientes(id,nombre,localidad,zona,cuit)') || [];
     renderPedidos(allPedidos);
   } catch (e) { console.error(e); }
 }
@@ -918,17 +966,27 @@ async function loadPedidos() {
 function updateDashboard() {
   document.getElementById('dash-clientes').textContent = allClientes.length;
   document.getElementById('dash-productos').textContent = allProductos.length;
-  const pendientes = allPedidos.filter(p => p.estado === 'Pendiente').length;
-  const entregados = allPedidos.filter(p => p.estado === 'Entregado').length;
+  const presupuestos = allPedidos.filter(p => p.tipo_doc === 'Presupuesto');
+  const pedidos = allPedidos.filter(p => p.tipo_doc === 'Pedido');
+  const presupPend = presupuestos.filter(p => p.estado_presupuesto === 'Borrador').length;
+  const presupApro = presupuestos.filter(p => p.estado_presupuesto === 'Enviado').length;
+  const pendientes = pedidos.filter(p => p.estado === 'Pendiente').length;
+  const entregados = pedidos.filter(p => p.estado === 'Entregado').length;
+  const porCobrar = pedidos.filter(p => p.cobrado === 'Para cobrar').length;
+  const cobrados = pedidos.filter(p => p.cobrado === 'Cobrado').length;
+  document.getElementById('dash-presup-pend').textContent = presupPend;
+  document.getElementById('dash-presup-apro').textContent = presupApro;
   document.getElementById('dash-pendientes').textContent = pendientes;
   document.getElementById('dash-entregados').textContent = entregados;
+  document.getElementById('dash-por-cobrar').textContent = porCobrar;
+  document.getElementById('dash-cobrados').textContent = cobrados;
   const now = new Date();
   const mes = now.getMonth(), anio = now.getFullYear();
   const ventasMes = allPedidos
     .filter(p => { const d = new Date(p.fecha); return d.getMonth() === mes && d.getFullYear() === anio; })
     .reduce((s, p) => s + (p.total || 0), 0);
   document.getElementById('dash-ventas').textContent = formatCurrency(ventasMes);
-  document.getElementById('dash-total-pedidos').textContent = `${allPedidos.length} pedidos en total`;
+  document.getElementById('dash-total-pedidos').textContent = `${allPedidos.length} documentos en total`;
 }
 
 // ── FORMAT ───────────────────────────────────────────────────
@@ -1025,18 +1083,31 @@ function renderPedidos(list) {
   const el = document.getElementById('list-pedidos');
   const q = document.getElementById('search-pedidos').value.toLowerCase();
   let filtered = list;
-  if (pedidoFilter) filtered = filtered.filter(p => p.estado === pedidoFilter);
+  if (docFilter === 'Presupuesto') filtered = filtered.filter(p => !p.tipo_doc || p.tipo_doc === 'Presupuesto');
+  else if (docFilter === 'Pedido') filtered = filtered.filter(p => p.tipo_doc === 'Pedido');
+  else if (docFilter === 'Pendiente') filtered = filtered.filter(p => p.tipo_doc === 'Pedido' && p.estado === 'Pendiente');
+  else if (docFilter === 'Entregado') filtered = filtered.filter(p => p.tipo_doc === 'Pedido' && p.estado === 'Entregado');
+  else if (docFilter === 'Para cobrar') filtered = filtered.filter(p => p.tipo_doc === 'Pedido' && p.cobrado === 'Para cobrar');
+  else if (docFilter === 'Cobrado') filtered = filtered.filter(p => p.tipo_doc === 'Pedido' && p.cobrado === 'Cobrado');
   if (q) filtered = filtered.filter(p =>
     p.numero_pedido?.toLowerCase().includes(q) || p.cliente?.nombre?.toLowerCase().includes(q)
   );
-  document.getElementById('count-pedidos').textContent = `${filtered.length} pedido${filtered.length !== 1 ? 's' : ''}`;
+  const nPresup = filtered.filter(p => !p.tipo_doc || p.tipo_doc === 'Presupuesto').length;
+  const nPed = filtered.filter(p => p.tipo_doc === 'Pedido').length;
+  document.getElementById('count-pedidos').textContent = filtered.length + ' documentos (' + nPresup + ' presup. / ' + nPed + ' ped.)';
   if (!filtered.length) {
     el.innerHTML = `<div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-title">Sin pedidos</div><div class="empty-sub">Creá tu primer pedido</div><button class="btn-sm" onclick="showForm('pedido')">Nuevo Pedido</button></div>`;
     return;
   }
   el.innerHTML = filtered.map(p => {
+    const esPresupuesto = !p.tipo_doc || p.tipo_doc === 'Presupuesto';
     const estadoClass = p.estado === 'Entregado' ? 'badge-success' : 'badge-warning';
     const estadoIcon = p.estado === 'Entregado' ? '✅' : '⏳';
+    const tipoClass = esPresupuesto ? 'badge-presupuesto' : 'badge-pedido';
+    const tipoLabel = esPresupuesto ? '📋 Presupuesto' : '🛒 Pedido';
+    const cobradoClass = p.cobrado === 'Cobrado' ? 'badge-cobrado' : 'badge-por-cobrar';
+    const cobradoLabel = p.cobrado === 'Cobrado' ? '💵 Cobrado' : '💰 Por cobrar';
+    const estadoPresup = p.estado_presupuesto === 'Enviado' ? '📤 Enviado' : '📝 Borrador';
     return `
     <div class="card" onclick="showPedidoDetail('${p.id}')">
       <div class="pedido-header">
@@ -1044,14 +1115,21 @@ function renderPedidos(list) {
           <div class="pedido-num">#${p.numero_pedido}</div>
           <div class="pedido-fecha">${formatDate(p.fecha)}</div>
         </div>
-        <span class="badge ${estadoClass}" onclick="event.stopPropagation();toggleEstado('${p.id}','${p.estado}')">${estadoIcon} ${p.estado}</span>
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+          <span class="badge ${tipoClass}">${tipoLabel}</span>
+          ${esPresupuesto
+            ? `<span class="badge badge-gray" style="font-size:10px">${estadoPresup}</span>`
+            : `<span class="badge ${estadoClass}" onclick="event.stopPropagation();toggleEstado('${p.id}','${p.estado}')">${estadoIcon} ${p.estado}</span>`
+          }
+        </div>
       </div>
       <div class="info-row">🏢 <strong>${p.cliente?.nombre || 'Cliente'}</strong></div>
       ${p.cliente?.zona ? `<div class="info-row" style="font-size:12px">📍 ${p.cliente.localidad} · ${p.cliente.zona}</div>` : ''}
       <div class="total-row" style="margin-top:10px">
-        <div class="total-label">Total del pedido</div>
+        <div class="total-label">Total</div>
         <div class="total-value">${formatCurrency(p.total)}</div>
       </div>
+      ${!esPresupuesto ? `<div style="padding:0 0 8px"><span class="badge ${cobradoClass}" onclick="event.stopPropagation();toggleCobrado('${p.id}','${p.cobrado||'Para cobrar'}')">${cobradoLabel}</span></div>` : ''}
       <div class="card-actions" onclick="event.stopPropagation()">
         <button class="action-btn" onclick="editPedido('${p.id}')">✏️ Editar</button>
         <button class="action-btn danger" onclick="deletePedido('${p.id}','${p.numero_pedido}')">🗑 Eliminar</button>
@@ -1061,10 +1139,13 @@ function renderPedidos(list) {
 }
 
 function filterPedidos() { renderPedidos(allPedidos); }
-function setPedidoFilter(f) {
-  pedidoFilter = f;
+let docFilter = '';
+function setDocFilter(f) {
+  docFilter = f;
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-  document.getElementById(f === '' ? 'chip-all' : f === 'Pendiente' ? 'chip-pendiente' : 'chip-entregado').classList.add('active');
+  const map = {'':'chip-all','Presupuesto':'chip-presupuesto','Pedido':'chip-pedido','Pendiente':'chip-pendiente','Entregado':'chip-entregado','Para cobrar':'chip-por-cobrar','Cobrado':'chip-cobrado'};
+  const el = document.getElementById(map[f]);
+  if(el) el.classList.add('active');
   renderPedidos(allPedidos);
 }
 
@@ -1249,6 +1330,8 @@ function setupPedidoForm(id) {
   sel.innerHTML = '<option value="">— Seleccionar cliente —</option>' +
     allClientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
   document.getElementById('cliente-preview').classList.add('hidden');
+  document.getElementById('ped-tipo-doc').value = 'Presupuesto';
+  document.getElementById('btn-save-pedido').textContent = 'Crear Presupuesto';
   renderPedidoItems();
   if (id) {
     const p = allPedidos.find(x => x.id === id);
@@ -1381,6 +1464,7 @@ async function savePedido() {
   if (!clienteId) { showToast('Seleccioná un cliente', 'error'); return; }
   if (!pedidoItems.length) { showToast('Agregá al menos un producto', 'error'); return; }
   const total = pedidoItems.reduce((s, i) => s + i.subtotal, 0);
+  const tipoPedido = document.getElementById('ped-tipo-doc')?.value || 'Pedido';
   try {
     if (editingId) {
       await api('PATCH', `pedidos?id=eq.${editingId}`, { cliente_id: clienteId, total });
@@ -1394,7 +1478,7 @@ async function savePedido() {
       const secuencial = await getNextSecuencial(fecha);
       const yy = fecha.slice(2,4), mm = fecha.slice(5,7), dd = fecha.slice(8,10);
       const numero_pedido = `${yy}${mm}${dd}-${String(secuencial).padStart(2,'0')}`;
-      const [pedido] = await api('POST', 'pedidos', { numero_pedido, cliente_id: clienteId, fecha, estado: 'Pendiente', total });
+      const [pedido] = await api('POST', 'pedidos', { numero_pedido, cliente_id: clienteId, fecha, estado: 'Pendiente', tipo_doc: tipoPedido, cobrado: 'Para cobrar', estado_presupuesto: tipoPedido === 'Presupuesto' ? 'Borrador' : null, total });
       for (const item of pedidoItems) {
         await api('POST', 'pedido_items', { pedido_id: pedido.id, producto_id: item.producto_id, cantidad: item.cantidad, precio_unitario: item.precio_unitario, subtotal: item.subtotal });
       }
@@ -1421,6 +1505,52 @@ async function deletePedido(id, num) {
     allPedidos = allPedidos.filter(p => p.id !== id);
     renderPedidos(allPedidos);
     showToast('✅ Pedido eliminado');
+  } catch (e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+function updateTipoDoc() {
+  const tipo = document.getElementById('ped-tipo-doc').value;
+  document.getElementById('btn-save-pedido').textContent = tipo === 'Presupuesto' ? 'Crear Presupuesto' : 'Crear Pedido';
+}
+
+async function toggleCobrado(id, cobradoActual) {
+  const nuevo = cobradoActual === 'Para cobrar' ? 'Cobrado' : 'Para cobrar';
+  if (!confirm(`¿Marcar como "${nuevo}"?`)) return;
+  try {
+    await api('PATCH', `pedidos?id=eq.${id}`, { cobrado: nuevo });
+    const p = allPedidos.find(x => x.id === id);
+    if (p) p.cobrado = nuevo;
+    renderPedidos(allPedidos);
+    showToast(`✅ ${nuevo}`);
+  } catch (e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+async function convertirAPedido(id) {
+  if (!confirm('¿Convertir este presupuesto en PEDIDO?\nSe asignará estado: Pendiente de entrega y Para cobrar.')) return;
+  try {
+    await api('PATCH', `pedidos?id=eq.${id}`, {
+      tipo_doc: 'Pedido',
+      estado: 'Pendiente',
+      cobrado: 'Para cobrar',
+      estado_presupuesto: null
+    });
+    const p = allPedidos.find(x => x.id === id);
+    if (p) { p.tipo_doc = 'Pedido'; p.estado = 'Pendiente'; p.cobrado = 'Para cobrar'; p.estado_presupuesto = null; }
+    showToast('✅ Convertido a Pedido');
+    await loadPedidos();
+    showPedidoDetail(id);
+  } catch (e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+async function toggleEstadoPresupuesto(id, estadoActual) {
+  const nuevo = estadoActual === 'Borrador' ? 'Enviado' : 'Borrador';
+  if (!confirm(`¿Marcar presupuesto como "${nuevo}"?`)) return;
+  try {
+    await api('PATCH', `pedidos?id=eq.${id}`, { estado_presupuesto: nuevo });
+    const p = allPedidos.find(x => x.id === id);
+    if (p) p.estado_presupuesto = nuevo;
+    showToast(`✅ Presupuesto: ${nuevo}`);
+    showPedidoDetail(id);
   } catch (e) { showToast('❌ ' + e.message, 'error'); }
 }
 
@@ -1509,6 +1639,50 @@ async function toggleEstadoDetail(id, estadoActual) {
     showToast(`✅ Estado: ${nuevo}`);
     showPedidoDetail(id);
   } catch (e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+async function toggleCobradoDetail(id, cobradoActual) {
+  const nuevo = cobradoActual === 'Para cobrar' ? 'Cobrado' : 'Para cobrar';
+  if (!confirm(`¿Marcar como "${nuevo}"?`)) return;
+  try {
+    await api('PATCH', `pedidos?id=eq.${id}`, { cobrado: nuevo });
+    const p = allPedidos.find(x => x.id === id);
+    if (p) p.cobrado = nuevo;
+    showToast(`✅ ${nuevo}`);
+    await loadPedidos();
+    showPedidoDetail(id);
+  } catch (e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+function imprimirPresupuesto(id) {
+  // Abre ventana de impresión con el detalle actual visible
+  const content = document.getElementById('detail-pedido-content');
+  if (!content) return;
+  const printWin = window.open('', '_blank', 'width=800,height=600');
+  printWin.document.write(`
+    <!DOCTYPE html><html><head>
+    <meta charset="UTF-8">
+    <title>Presupuesto</title>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 32px; color: #111; }
+      h1 { font-size: 24px; margin-bottom: 4px; }
+      .sub { color: #555; font-size: 14px; margin-bottom: 24px; }
+      table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+      th { background: #0B1F3A; color: white; padding: 10px; text-align: left; }
+      td { padding: 10px; border-bottom: 1px solid #ddd; }
+      .total { font-size: 20px; font-weight: bold; text-align: right; margin-top: 16px; }
+      .footer { margin-top: 40px; font-size: 12px; color: #888; }
+      @media print { button { display: none; } }
+    </style>
+    </head><body>
+    <h1>ADROGUÉ INSUMOS</h1>
+    <div class="sub">Productos y servicios para la industria</div>
+    ${content.innerHTML.replace(/onclick="[^"]*"/g,'').replace(/<button[^>]*>.*?<\/button>/gs,'')}
+    <div class="footer">Presupuesto válido por 30 días. Gracias por su consulta.</div>
+    <script>window.onload = () => { window.print(); }<\/script>
+    </body></html>
+  `);
+  printWin.document.close();
 }
 
 // ── BOOT ─────────────────────────────────────────────────────
