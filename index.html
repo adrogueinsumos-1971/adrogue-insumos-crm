@@ -830,9 +830,10 @@ async function api(method, path, body = null, token = null) {
     'apikey': SUPABASE_KEY,
     'Authorization': `Bearer ${t || SUPABASE_KEY}`,
     'Content-Type': 'application/json',
-    'Prefer': method === 'POST' ? 'return=representation' : 'return=representation'
+    'Prefer': 'return=representation'
   };
   if (method === 'GET') delete headers['Content-Type'];
+  if (method === 'PATCH') headers['Prefer'] = 'return=minimal';
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     method, headers, body: body ? JSON.stringify(body) : null
   });
@@ -1526,20 +1527,18 @@ async function toggleCobrado(id, cobradoActual) {
 }
 
 async function convertirAPedido(id) {
-  if (!confirm('¿Convertir este presupuesto en PEDIDO?\nSe asignará estado: Pendiente de entrega y Para cobrar.')) return;
+  if (!confirm('¿Convertir este presupuesto en PEDIDO?')) return;
   try {
     await api('PATCH', `pedidos?id=eq.${id}`, {
       tipo_doc: 'Pedido',
       estado: 'Pendiente',
       cobrado: 'Para cobrar',
-      estado_presupuesto: null
+      estado_presupuesto: 'Aprobado'
     });
-    const p = allPedidos.find(x => x.id === id);
-    if (p) { p.tipo_doc = 'Pedido'; p.estado = 'Pendiente'; p.cobrado = 'Para cobrar'; p.estado_presupuesto = null; }
     showToast('✅ Convertido a Pedido');
     await loadPedidos();
     showPedidoDetail(id);
-  } catch (e) { showToast('❌ ' + e.message, 'error'); }
+  } catch (e) { showToast('❌ Error: ' + e.message, 'error'); }
 }
 
 async function toggleEstadoPresupuesto(id, estadoActual) {
@@ -1574,72 +1573,122 @@ async function showPedidoDetail(id) {
   const header = document.getElementById('main-header');
   header.innerHTML = `
     <button class="header-back" onclick="goTo('pedidos')">‹</button>
-    <div class="header-title">Detalle de Pedido</div>
+    <div class="header-title">Detalle</div>
     <button class="header-action" onclick="editPedido('${id}')">Editar</button>`;
   const content = document.getElementById('detail-pedido-content');
   content.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
   try {
-    const pedido = await api('GET', `pedidos?id=eq.${id}&select=*,cliente:clientes(*)`);
-    const p = pedido[0];
+    const pedidoArr = await api('GET', `pedidos?id=eq.${id}&select=*,cliente:clientes(*)`);
+    const p = pedidoArr[0];
     const items = await api('GET', `pedido_items?pedido_id=eq.${id}&select=*,producto:productos(*)`);
-    const estadoColor = p.estado === 'Entregado' ? 'var(--success)' : 'var(--warning)';
-    const estadoIcon = p.estado === 'Entregado' ? '✅' : '⏳';
-    content.innerHTML = `
-      <div class="estado-header" style="background:${estadoColor}">
-        <div class="estado-icon">${estadoIcon}</div>
-        <div class="estado-info">
-          <div class="estado-lbl">Estado del pedido</div>
-          <div class="estado-val">${p.estado}</div>
+    // Update local cache
+    const cached = allPedidos.find(x => x.id === id);
+    if (cached) { cached.tipo_doc = p.tipo_doc; cached.estado = p.estado; cached.cobrado = p.cobrado; cached.estado_presupuesto = p.estado_presupuesto; }
+
+    const esPresupuesto = !p.tipo_doc || p.tipo_doc === 'Presupuesto';
+    const itemsHTML = items.map(i => `
+      <div class="detail-item-row">
+        <div class="detail-item-info">
+          <div class="detail-item-name">${i.producto?.nombre}</div>
+          <div class="detail-item-sub">${i.producto?.presentacion_tipo} ${i.producto?.presentacion_cantidad} ${i.producto?.unidad_medida}</div>
+          <div style="font-size:11px;color:#1A3A6B;margin-top:2px;font-weight:600">${formatCurrency(i.precio_unitario)} × ${i.cantidad} unidades</div>
         </div>
-        <button class="btn-estado" onclick="toggleEstadoDetail('${p.id}','${p.estado}')">
-          ${p.estado === 'Pendiente' ? 'Marcar Entregado' : 'Marcar Pendiente'}
-        </button>
-      </div>
-      <div class="detail-section">
-        <div class="detail-title">📋 Información del Pedido</div>
-        <div class="detail-row"><div class="detail-key">Número</div><div class="detail-val">#${p.numero_pedido}</div></div>
-        <div class="divider"></div>
-        <div class="detail-row"><div class="detail-key">Fecha</div><div class="detail-val">${formatDate(p.fecha)}</div></div>
-      </div>
-      <div class="detail-section">
-        <div class="detail-title">🏢 Cliente</div>
-        <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:8px">${p.cliente?.nombre}</div>
-        <div style="font-size:13px;color:var(--text2);margin-bottom:4px">CUIT: ${p.cliente?.cuit}</div>
-        <div style="font-size:13px;color:var(--text2);margin-bottom:4px">${p.cliente?.calle} ${p.cliente?.altura}, ${p.cliente?.localidad}</div>
-        <div style="font-size:13px;color:var(--text2)">Zona: ${p.cliente?.zona}</div>
-      </div>
-      <div class="detail-section">
-        <div class="detail-title">📦 Productos (${items.length})</div>
-        ${items.map(i => `
-          <div class="detail-item-row">
-            <div class="detail-item-info">
-              <div class="detail-item-name">${i.producto?.nombre}</div>
-              <div class="detail-item-sub">${i.producto?.presentacion_tipo} ${i.producto?.presentacion_cantidad} ${i.producto?.unidad_medida}</div>
-              <div style="font-size:11px;color:var(--navy);margin-top:2px;font-weight:600">${formatCurrency(i.precio_unitario)} × ${i.cantidad} unidades</div>
-            </div>
-            <div class="detail-item-total">${formatCurrency(i.subtotal)}</div>
-          </div>`).join('')}
-        <div class="grand-total-row">
-          <div class="grand-total-key">TOTAL</div>
-          <div class="grand-total-val">${formatCurrency(p.total)}</div>
+        <div class="detail-item-total">${formatCurrency(i.subtotal)}</div>
+      </div>`).join('');
+
+    if (esPresupuesto) {
+      // ── PRESUPUESTO VIEW ──
+      content.innerHTML = `
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <button class="convert-btn" style="flex:2" onclick="convertirAPedido('${p.id}')">🛒 Convertir en Pedido</button>
+          <button class="pdf-btn" style="flex:1;margin:0" onclick="generarPDF('${p.id}')">📄 PDF</button>
         </div>
-      </div>`;
+        <div class="estado-header" style="background:#7C3AED">
+          <div class="estado-icon">📋</div>
+          <div class="estado-info">
+            <div class="estado-lbl">PRESUPUESTO</div>
+            <div class="estado-val">${p.estado_presupuesto || 'Borrador'}</div>
+          </div>
+          <button class="btn-estado" onclick="toggleEstadoPresupuesto('${p.id}','${p.estado_presupuesto||'Borrador'}')">
+            ${p.estado_presupuesto === 'Enviado' ? '↩ Borrador' : '📤 Enviado'}
+          </button>
+        </div>
+        <div class="detail-section">
+          <div class="detail-title">📋 Datos del Presupuesto</div>
+          <div class="detail-row"><div class="detail-key">Número</div><div class="detail-val">#${p.numero_pedido}</div></div>
+          <div class="divider"></div>
+          <div class="detail-row"><div class="detail-key">Fecha</div><div class="detail-val">${formatDate(p.fecha)}</div></div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-title">🏢 Cliente</div>
+          <div style="font-size:17px;font-weight:800;color:#0B1F3A;margin-bottom:8px">${p.cliente?.nombre}</div>
+          <div style="font-size:13px;color:#64748B;margin-bottom:4px">CUIT: ${p.cliente?.cuit}</div>
+          <div style="font-size:13px;color:#64748B;margin-bottom:4px">${p.cliente?.calle} ${p.cliente?.altura}, ${p.cliente?.localidad}</div>
+          <div style="font-size:13px;color:#64748B">Zona: ${p.cliente?.zona}</div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-title">📦 Productos (${items.length})</div>
+          ${itemsHTML}
+          <div class="grand-total-row">
+            <div class="grand-total-key">TOTAL</div>
+            <div class="grand-total-val">${formatCurrency(p.total)}</div>
+          </div>
+        </div>`;
+    } else {
+      // ── PEDIDO VIEW ──
+      const estadoColor = p.estado === 'Entregado' ? 'var(--success)' : 'var(--warning)';
+      const estadoIcon = p.estado === 'Entregado' ? '✅' : '⏳';
+      const cobradoColor = p.cobrado === 'Cobrado' ? '#16A34A' : '#B45309';
+      const cobradoIcon = p.cobrado === 'Cobrado' ? '💵' : '💰';
+      content.innerHTML = `
+        <button class="pdf-btn" onclick="generarPDF('${p.id}')">📄 Descargar / Compartir PDF</button>
+        <div class="estado-header" style="background:${estadoColor}">
+          <div class="estado-icon">${estadoIcon}</div>
+          <div class="estado-info">
+            <div class="estado-lbl">ENTREGA</div>
+            <div class="estado-val">${p.estado}</div>
+          </div>
+          <button class="btn-estado" onclick="toggleEstadoDetail('${p.id}','${p.estado}')">
+            ${p.estado === 'Pendiente' ? '✅ Entregado' : '↩ Pendiente'}
+          </button>
+        </div>
+        <div class="estado-header" style="background:${cobradoColor};margin-top:-8px">
+          <div class="estado-icon">${cobradoIcon}</div>
+          <div class="estado-info">
+            <div class="estado-lbl">COBRO</div>
+            <div class="estado-val">${p.cobrado || 'Para cobrar'}</div>
+          </div>
+          <button class="btn-estado" onclick="toggleCobradoDetail('${p.id}','${p.cobrado||'Para cobrar'}')">
+            ${p.cobrado === 'Cobrado' ? '↩ Por cobrar' : '💵 Cobrado'}
+          </button>
+        </div>
+        <div class="detail-section">
+          <div class="detail-title">🛒 Datos del Pedido</div>
+          <div class="detail-row"><div class="detail-key">Número</div><div class="detail-val">#${p.numero_pedido}</div></div>
+          <div class="divider"></div>
+          <div class="detail-row"><div class="detail-key">Fecha</div><div class="detail-val">${formatDate(p.fecha)}</div></div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-title">🏢 Cliente</div>
+          <div style="font-size:17px;font-weight:800;color:#0B1F3A;margin-bottom:8px">${p.cliente?.nombre}</div>
+          <div style="font-size:13px;color:#64748B;margin-bottom:4px">CUIT: ${p.cliente?.cuit}</div>
+          <div style="font-size:13px;color:#64748B;margin-bottom:4px">${p.cliente?.calle} ${p.cliente?.altura}, ${p.cliente?.localidad}</div>
+          <div style="font-size:13px;color:#64748B">Zona: ${p.cliente?.zona}</div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-title">📦 Productos (${items.length})</div>
+          ${itemsHTML}
+          <div class="grand-total-row">
+            <div class="grand-total-key">TOTAL</div>
+            <div class="grand-total-val">${formatCurrency(p.total)}</div>
+          </div>
+        </div>`;
+    }
   } catch (e) {
     content.innerHTML = `<div class="empty-state"><div class="empty-title">Error al cargar</div><div class="empty-sub">${e.message}</div></div>`;
   }
 }
 
-async function toggleEstadoDetail(id, estadoActual) {
-  const nuevo = estadoActual === 'Pendiente' ? 'Entregado' : 'Pendiente';
-  if (!confirm(`¿Marcar como "${nuevo}"?`)) return;
-  try {
-    await api('PATCH', `pedidos?id=eq.${id}`, { estado: nuevo });
-    const p = allPedidos.find(x => x.id === id);
-    if (p) p.estado = nuevo;
-    showToast(`✅ Estado: ${nuevo}`);
-    showPedidoDetail(id);
-  } catch (e) { showToast('❌ ' + e.message, 'error'); }
-}
 
 async function toggleCobradoDetail(id, cobradoActual) {
   const nuevo = cobradoActual === 'Para cobrar' ? 'Cobrado' : 'Para cobrar';
@@ -1654,35 +1703,132 @@ async function toggleCobradoDetail(id, cobradoActual) {
   } catch (e) { showToast('❌ ' + e.message, 'error'); }
 }
 
-function imprimirPresupuesto(id) {
-  // Abre ventana de impresión con el detalle actual visible
-  const content = document.getElementById('detail-pedido-content');
-  if (!content) return;
-  const printWin = window.open('', '_blank', 'width=800,height=600');
-  printWin.document.write(`
-    <!DOCTYPE html><html><head>
-    <meta charset="UTF-8">
-    <title>Presupuesto</title>
-    <style>
-      body { font-family: Arial, sans-serif; padding: 32px; color: #111; }
-      h1 { font-size: 24px; margin-bottom: 4px; }
-      .sub { color: #555; font-size: 14px; margin-bottom: 24px; }
-      table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-      th { background: #0B1F3A; color: white; padding: 10px; text-align: left; }
-      td { padding: 10px; border-bottom: 1px solid #ddd; }
-      .total { font-size: 20px; font-weight: bold; text-align: right; margin-top: 16px; }
-      .footer { margin-top: 40px; font-size: 12px; color: #888; }
-      @media print { button { display: none; } }
-    </style>
-    </head><body>
-    <h1>ADROGUÉ INSUMOS</h1>
-    <div class="sub">Productos y servicios para la industria</div>
-    ${content.innerHTML.replace(/onclick="[^"]*"/g,'').replace(/<button[^>]*>.*?<\/button>/gs,'')}
-    <div class="footer">Presupuesto válido por 30 días. Gracias por su consulta.</div>
-    <script>window.onload = () => { window.print(); }<\/script>
-    </body></html>
-  `);
-  printWin.document.close();
+function generarPDF(id) {
+  // Get current detail content and open print window
+  const pedido = allPedidos.find(p => p.id === id);
+  if (!pedido) return;
+
+  // Fetch fresh data and build clean printable page
+  api('GET', `pedidos?id=eq.${id}&select=*,cliente:clientes(*)`).then(arr => {
+    const p = arr[0];
+    return api('GET', `pedido_items?pedido_id=eq.${id}&select=*,producto:productos(*)`).then(items => {
+      const tipo = (!p.tipo_doc || p.tipo_doc === 'Presupuesto') ? 'PRESUPUESTO' : 'PEDIDO';
+      const filas = items.map(i => `
+        <tr>
+          <td>${i.producto?.nombre}<br><small style="color:#666">${i.producto?.presentacion_tipo} ${i.producto?.presentacion_cantidad} ${i.producto?.unidad_medida}</small></td>
+          <td style="text-align:center">${i.cantidad}</td>
+          <td style="text-align:right">${formatCurrency(i.precio_unitario)}</td>
+          <td style="text-align:right"><strong>${formatCurrency(i.subtotal)}</strong></td>
+        </tr>`).join('');
+
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <title>${tipo} #${p.numero_pedido}</title>
+        <style>
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { font-family: Arial, sans-serif; padding: 40px; color: #111; font-size: 14px; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; border-bottom: 3px solid #0B1F3A; padding-bottom: 20px; }
+          .company { }
+          .company h1 { font-size: 26px; color: #0B1F3A; letter-spacing: 1px; }
+          .company p { color: #666; font-size: 12px; margin-top: 4px; }
+          .doc-info { text-align: right; }
+          .doc-tipo { font-size: 20px; font-weight: 900; color: #C8102E; letter-spacing: 2px; }
+          .doc-num { font-size: 16px; font-weight: 700; color: #0B1F3A; margin-top: 4px; }
+          .doc-fecha { font-size: 12px; color: #666; margin-top: 4px; }
+          .section { margin-bottom: 24px; }
+          .section-title { font-size: 12px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+          .cliente-nombre { font-size: 18px; font-weight: 800; color: #0B1F3A; }
+          .cliente-info { font-size: 13px; color: #555; margin-top: 4px; line-height: 1.6; }
+          table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+          th { background: #0B1F3A; color: white; padding: 10px 12px; text-align: left; font-size: 13px; }
+          th:last-child, th:nth-child(2), th:nth-child(3) { text-align: center; }
+          th:last-child { text-align: right; }
+          td { padding: 10px 12px; border-bottom: 1px solid #eee; font-size: 13px; vertical-align: top; }
+          tr:nth-child(even) td { background: #f9f9f9; }
+          .total-row { display: flex; justify-content: flex-end; margin-top: 16px; }
+          .total-box { background: #0B1F3A; color: white; padding: 14px 24px; border-radius: 8px; text-align: right; }
+          .total-label { font-size: 11px; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; }
+          .total-val { font-size: 26px; font-weight: 900; margin-top: 4px; }
+          .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #ddd; font-size: 11px; color: #999; text-align: center; }
+          @media print { @page { margin: 20mm; } }
+        </style>
+      </head><body>
+        <div class="header">
+          <div class="company">
+            <h1>ADROGUÉ INSUMOS</h1>
+            <p>Productos y servicios para la industria</p>
+          </div>
+          <div class="doc-info">
+            <div class="doc-tipo">${tipo}</div>
+            <div class="doc-num">#${p.numero_pedido}</div>
+            <div class="doc-fecha">${formatDate(p.fecha)}</div>
+          </div>
+        </div>
+        <div class="section">
+          <div class="section-title">Cliente</div>
+          <div class="cliente-nombre">${p.cliente?.nombre}</div>
+          <div class="cliente-info">
+            CUIT: ${p.cliente?.cuit} &nbsp;|&nbsp; IVA: ${p.cliente?.iva}<br>
+            ${p.cliente?.calle} ${p.cliente?.altura}, ${p.cliente?.localidad} &nbsp;|&nbsp; ${p.cliente?.zona}
+            ${p.cliente?.whatsapp ? '<br>WhatsApp: ' + p.cliente.whatsapp : ''}
+          </div>
+        </div>
+        <div class="section">
+          <div class="section-title">Detalle</div>
+          <table>
+            <thead><tr>
+              <th>Producto</th>
+              <th style="text-align:center">Cant.</th>
+              <th style="text-align:center">Precio Unit.</th>
+              <th style="text-align:right">Subtotal</th>
+            </tr></thead>
+            <tbody>${filas}</tbody>
+          </table>
+          <div class="total-row">
+            <div class="total-box">
+              <div class="total-label">Total</div>
+              <div class="total-val">${formatCurrency(p.total)}</div>
+            </div>
+          </div>
+        </div>
+        <div class="footer">
+          ${tipo === 'PRESUPUESTO' ? 'Presupuesto válido por 30 días. Precios sujetos a variación.' : 'Gracias por su compra.'}<br>
+          Adrogué Insumos — Productos y servicios para la industria
+        </div>
+        <script>window.onload = function(){ window.print(); }<\/script>
+      </body></html>`;
+
+      const win = window.open('', '_blank');
+      win.document.write(html);
+      win.document.close();
+    });
+  }).catch(e => showToast('❌ Error al generar PDF: ' + e.message, 'error'));
+}
+
+
+async function toggleEstadoDetail(id, estadoActual) {
+  const nuevo = estadoActual === 'Pendiente' ? 'Entregado' : 'Pendiente';
+  if (!confirm(`¿Marcar como "${nuevo}"?`)) return;
+  try {
+    await api('PATCH', `pedidos?id=eq.${id}`, { estado: nuevo });
+    const p = allPedidos.find(x => x.id === id);
+    if (p) p.estado = nuevo;
+    showToast(`✅ Entrega: ${nuevo}`);
+    await loadPedidos();
+    showPedidoDetail(id);
+  } catch (e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+async function toggleCobradoDetail(id, cobradoActual) {
+  const nuevo = cobradoActual === 'Para cobrar' ? 'Cobrado' : 'Para cobrar';
+  if (!confirm(`¿Marcar como "${nuevo}"?`)) return;
+  try {
+    await api('PATCH', `pedidos?id=eq.${id}`, { cobrado: nuevo });
+    const p = allPedidos.find(x => x.id === id);
+    if (p) p.cobrado = nuevo;
+    showToast(`✅ Cobro: ${nuevo}`);
+    await loadPedidos();
+    showPedidoDetail(id);
+  } catch (e) { showToast('❌ ' + e.message, 'error'); }
 }
 
 // ── BOOT ─────────────────────────────────────────────────────
