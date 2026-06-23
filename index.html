@@ -415,6 +415,7 @@ body {
 .badge-pedido { background: #DBEAFE; color: #1D4ED8; border: 1px solid #1D4ED8; }
 .badge-cobrado { background: var(--delivered-bg); color: var(--success); border: 1px solid var(--success); }
 .badge-por-cobrar { background: #FEF3C7; color: #B45309; border: 1px solid #B45309; }
+.badge-compra { background: #FEE2E2; color: #DC2626; border: 1px solid #DC2626; }
 .convert-btn { width: 100%; padding: 14px; background: var(--navy); color: var(--white); border: none; border-radius: var(--radius-sm); font-size: 15px; font-weight: 800; cursor: pointer; font-family: "Barlow", sans-serif; margin-bottom: 12px; letter-spacing: 0.3px; }
 .pdf-btn { width: 100%; padding: 12px; background: #7C3AED; color: var(--white); border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 700; cursor: pointer; font-family: "Barlow", sans-serif; margin-bottom: 8px; }
 /* ── PDF PRINT ── */
@@ -517,6 +518,19 @@ body {
           <div class="stat-label">Pedidos Cobrados</div>
         </div>
       </div>
+      <div class="section-title">Compras del mes</div>
+      <div class="stats-grid">
+        <div class="stat-card" style="border-left-color:#C8102E" onclick="goTo('compras')">
+          <div class="stat-icon">🏪</div>
+          <div class="stat-value" id="dash-compras-mes" style="color:#C8102E;font-size:14px">—</div>
+          <div class="stat-label">Total Compras</div>
+        </div>
+        <div class="stat-card" style="border-left-color:#16A34A">
+          <div class="stat-icon">📊</div>
+          <div class="stat-value" id="dash-margen-mes" style="font-size:14px">—</div>
+          <div class="stat-label">Margen (V - C)</div>
+        </div>
+      </div>
       <div class="section-title">Acciones rápidas</div>
       <div class="quick-grid">
         <button class="quick-btn" onclick="showForm('cliente')">
@@ -534,6 +548,10 @@ body {
         <button class="quick-btn" onclick="goTo('pedidos')">
           <div class="quick-icon">📋</div>
           <div class="quick-label">Ver Pedidos</div>
+        </button>
+        <button class="quick-btn" onclick="showForm('compra')">
+          <div class="quick-icon">🏪</div>
+          <div class="quick-label">Nueva Compra</div>
         </button>
       </div>
     </div>
@@ -790,6 +808,82 @@ body {
     <div class="content" id="detail-pedido-content"></div>
   </div>
 
+  <!-- COMPRAS PAGES -->
+  <div id="page-compras" class="page">
+    <div class="content">
+      <div class="search-bar">
+        <span>🔍</span>
+        <input type="text" placeholder="Buscar por número o proveedor..." id="search-compras" oninput="filterCompras()">
+      </div>
+      <div class="list-header">
+        <div class="list-count" id="count-compras">0 compras</div>
+        <button class="btn-sm" onclick="showForm('compra')">+ Nueva</button>
+      </div>
+      <div id="list-compras"></div>
+    </div>
+  </div>
+
+  <div id="page-form-compra" class="page">
+    <div class="content">
+      <div class="form-section">
+        <div class="step-header">
+          <div class="step-badge">1</div>
+          <div class="step-title">Seleccionar Proveedor</div>
+        </div>
+        <div class="field">
+          <label>Proveedor <span class="req">*</span></label>
+          <select id="cmp-proveedor" onchange="updateProveedorPreview()">
+            <option value="">— Seleccionar proveedor —</option>
+          </select>
+        </div>
+        <div class="cliente-preview hidden" id="proveedor-preview">
+          <div class="cliente-preview-name" id="proveedor-preview-name"></div>
+          <div class="cliente-preview-info" id="proveedor-preview-info"></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="step-header">
+          <div class="step-badge">2</div>
+          <div class="step-title">Agregar Productos</div>
+          <div class="step-count" id="compra-items-count">0/6</div>
+        </div>
+        <div id="compra-items-list">
+          <div class="empty-items">
+            <span style="font-size:32px">📦</span>
+            <div class="empty-items-text">Sin productos agregados</div>
+          </div>
+        </div>
+        <button class="add-product-btn" id="add-compra-product-btn" onclick="showCompraProductModal()">＋ Agregar producto</button>
+      </div>
+      <div class="total-card hidden" id="compra-total-card">
+        <div class="total-card-label">Total de la compra</div>
+        <div class="total-card-value" id="compra-total-display">$0</div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-outline" onclick="cancelForm()">Cancelar</button>
+        <button class="btn-primary" onclick="saveCompra()">Registrar Compra</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="page-detail-compra" class="page">
+    <div class="content" id="detail-compra-content"></div>
+  </div>
+
+  <!-- MODAL PRODUCTOS COMPRA -->
+  <div class="modal-overlay hidden" id="compra-product-modal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <div class="modal-title">Agregar producto</div>
+        <button class="modal-close" onclick="hideCompraProductModal()">✕</button>
+      </div>
+      <div class="modal-search">
+        <input type="text" placeholder="Buscar producto..." id="compra-modal-search" oninput="filterCompraModalProducts()">
+      </div>
+      <div class="modal-list" id="compra-modal-list"></div>
+    </div>
+  </div>
+
   <!-- BOTTOM NAV -->
   <div class="bottom-nav">
     <button class="nav-item active" id="nav-dashboard" onclick="goTo('dashboard')">
@@ -808,6 +902,10 @@ body {
       <div class="nav-icon">🛒</div>
       <div class="nav-label">Pedidos</div>
     </button>
+    <button class="nav-item" id="nav-compras" onclick="goTo('compras')">
+      <div class="nav-icon">🏪</div>
+      <div class="nav-label">Compras</div>
+    </button>
   </div>
 </div>
 
@@ -820,7 +918,7 @@ let SESSION_TOKEN = null;
 let currentPage = 'dashboard';
 let editingId = null;
 let pedidoItems = [];
-let allClientes = [], allProductos = [], allPedidos = [];
+let allClientes = [], allProductos = [], allPedidos = [], allCompras = [];
 let pedidoFilter = '';
 
 // ── API ──────────────────────────────────────────────────────
@@ -895,7 +993,7 @@ function handleLogout() {
 // ── INIT ─────────────────────────────────────────────────────
 async function initApp() {
   setupGreeting();
-  await Promise.all([loadClientes(), loadProductos(), loadPedidos()]);
+  await Promise.all([loadClientes(), loadProductos(), loadPedidos(), loadCompras()]);
   updateDashboard();
 }
 
@@ -922,7 +1020,7 @@ function goTo(page) {
 function updateHeader(page) {
   const header = document.getElementById('main-header');
   header.innerHTML = '';
-  const titles = { dashboard: null, clientes: 'Clientes', productos: 'Productos', pedidos: 'Pedidos' };
+  const titles = { dashboard: null, clientes: 'Clientes', productos: 'Productos', pedidos: 'Pedidos', compras: 'Compras' };
   if (page === 'dashboard') {
     header.innerHTML = `
       <div style="width:40px"></div>
@@ -933,7 +1031,7 @@ function updateHeader(page) {
         <button class="header-action" onclick="handleLogout()">⏏</button>
       </div>`;
   } else {
-    const addMap = { clientes: "showForm('cliente')", productos: "showForm('producto')", pedidos: "showForm('pedido')" };
+    const addMap = { clientes: "showForm('cliente')", productos: "showForm('producto')", pedidos: "showForm('pedido')", compras: "showForm('compra')" };
     header.innerHTML = `
       <div style="width:40px"></div>
       <div class="header-title">${titles[page]}</div>
@@ -986,8 +1084,19 @@ function updateDashboard() {
   const ventasMes = allPedidos
     .filter(p => { const d = new Date(p.fecha); return d.getMonth() === mes && d.getFullYear() === anio; })
     .reduce((s, p) => s + (p.total || 0), 0);
+  const comprasMes = allCompras
+    .filter(c => { const d = new Date(c.fecha); return d.getMonth() === mes && d.getFullYear() === anio; })
+    .reduce((s, c) => s + (c.total || 0), 0);
+  const margenMes = ventasMes - comprasMes;
   document.getElementById('dash-ventas').textContent = formatCurrency(ventasMes);
   document.getElementById('dash-total-pedidos').textContent = `${allPedidos.length} documentos en total`;
+  const dashComprasEl = document.getElementById('dash-compras-mes');
+  const dashMargenEl = document.getElementById('dash-margen-mes');
+  if (dashComprasEl) dashComprasEl.textContent = formatCurrency(comprasMes);
+  if (dashMargenEl) {
+    dashMargenEl.textContent = formatCurrency(margenMes);
+    dashMargenEl.style.color = margenMes >= 0 ? 'var(--success)' : 'var(--danger)';
+  }
 }
 
 // ── FORMAT ───────────────────────────────────────────────────
@@ -1152,6 +1261,18 @@ function setDocFilter(f) {
 
 // ── FORMS ────────────────────────────────────────────────────
 function showForm(type, id = null) {
+  if (type === 'compra') {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-form-compra').classList.add('active');
+    const header = document.getElementById('main-header');
+    header.innerHTML = `
+      <button class="header-back" onclick="goTo('compras')">‹</button>
+      <div class="header-title">${id ? 'Editar Compra' : 'Nueva Compra'}</div>
+      <div style="width:40px"></div>`;
+    setupCompraForm(id);
+    return;
+  }
   editingId = id;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -1170,10 +1291,11 @@ function showForm(type, id = null) {
 }
 
 function cancelForm() {
-  const backs = ['page-form-cliente', 'page-form-producto', 'page-form-pedido'];
+  const backs = ['page-form-cliente', 'page-form-producto', 'page-form-pedido', 'page-form-compra'];
   const active = backs.find(p => document.getElementById(p).classList.contains('active'));
   if (active === 'page-form-cliente') goTo('clientes');
   else if (active === 'page-form-producto') goTo('productos');
+  else if (active === 'page-form-compra') goTo('compras');
   else goTo('pedidos');
 }
 
@@ -1690,19 +1812,6 @@ async function showPedidoDetail(id) {
 }
 
 
-async function toggleCobradoDetail(id, cobradoActual) {
-  const nuevo = cobradoActual === 'Para cobrar' ? 'Cobrado' : 'Para cobrar';
-  if (!confirm(`¿Marcar como "${nuevo}"?`)) return;
-  try {
-    await api('PATCH', `pedidos?id=eq.${id}`, { cobrado: nuevo });
-    const p = allPedidos.find(x => x.id === id);
-    if (p) p.cobrado = nuevo;
-    showToast(`✅ ${nuevo}`);
-    await loadPedidos();
-    showPedidoDetail(id);
-  } catch (e) { showToast('❌ ' + e.message, 'error'); }
-}
-
 function generarPDF(id) {
   // Get current detail content and open print window
   const pedido = allPedidos.find(p => p.id === id);
@@ -1800,6 +1909,9 @@ function generarPDF(id) {
       const win = window.open('', '_blank');
       win.document.write(html);
       win.document.close();
+      // Devolver foco a la app cuando se cierra la ventana de impresión
+      setTimeout(() => { try { window.focus(); } catch(e) {} }, 500);
+      win.addEventListener('afterprint', () => { try { win.close(); window.focus(); } catch(e) {} });
     });
   }).catch(e => showToast('❌ Error al generar PDF: ' + e.message, 'error'));
 }
@@ -1829,6 +1941,383 @@ async function toggleCobradoDetail(id, cobradoActual) {
     await loadPedidos();
     showPedidoDetail(id);
   } catch (e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+
+// ── COMPRAS ──────────────────────────────────────────────────
+let compraItems = [];
+let editingCompraId = null;
+
+async function loadCompras() {
+  try {
+    allCompras = await api('GET', 'compras?order=created_at.desc&select=*,proveedor:clientes(id,nombre,localidad,zona,cuit)') || [];
+    renderCompras(allCompras);
+  } catch (e) { console.error('Error cargando compras:', e); }
+}
+
+function renderCompras(list) {
+  const el = document.getElementById('list-compras');
+  const q = document.getElementById('search-compras').value.toLowerCase();
+  const filtered = q ? list.filter(c =>
+    c.numero_compra?.toLowerCase().includes(q) ||
+    c.proveedor?.nombre?.toLowerCase().includes(q)
+  ) : list;
+  document.getElementById('count-compras').textContent = filtered.length + (filtered.length === 1 ? ' compra' : ' compras');
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🏪</div><div class="empty-title">Sin compras</div><div class="empty-sub">Registrá tu primera compra</div></div>';
+    return;
+  }
+  el.innerHTML = filtered.map(c => `
+    <div class="card" onclick="showCompraDetail('${c.id}')">
+      <div class="card-main">
+        <div class="card-title">${c.proveedor?.nombre || '—'}</div>
+        <div class="card-sub">#${c.numero_compra} · ${formatDate(c.fecha)}</div>
+        <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+          <span class="badge badge-compra">🏪 Compra</span>
+        </div>
+      </div>
+      <div class="card-right">
+        <div class="card-amount">${formatCurrency(c.total)}</div>
+        <div class="card-actions">
+          <button class="btn-sm" onclick="event.stopPropagation();editCompra('${c.id}')">Editar</button>
+          <button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteCompra('${c.id}','${c.numero_compra}')">Eliminar</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function filterCompras() { renderCompras(allCompras); }
+
+function setupCompraForm(id) {
+  editingCompraId = id || null;
+  compraItems = [];
+  const sel = document.getElementById('cmp-proveedor');
+  sel.innerHTML = '<option value="">— Seleccionar proveedor —</option>' +
+    allClientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+  document.getElementById('proveedor-preview').classList.add('hidden');
+  if (id) {
+    const c = allCompras.find(x => x.id === id);
+    if (c) {
+      sel.value = c.proveedor?.id || c.proveedor_id || '';
+      updateProveedorPreview();
+      api('GET', `compra_items?compra_id=eq.${id}&select=*,producto:productos(*)`).then(items => {
+        compraItems = (items || []).map(i => ({
+          producto_id: i.producto_id,
+          nombre: i.producto?.nombre,
+          presentacion: `${i.producto?.presentacion_tipo} ${i.producto?.presentacion_cantidad} ${i.producto?.unidad_medida}`,
+          precio_unitario: i.precio_unitario,
+          cantidad: i.cantidad,
+          subtotal: i.subtotal
+        }));
+        renderCompraItems();
+      });
+    }
+  } else {
+    renderCompraItems();
+  }
+}
+
+function updateProveedorPreview() {
+  const id = document.getElementById('cmp-proveedor').value;
+  const prev = document.getElementById('proveedor-preview');
+  if (!id) { prev.classList.add('hidden'); return; }
+  const c = allClientes.find(x => x.id === id);
+  if (c) {
+    document.getElementById('proveedor-preview-name').textContent = c.nombre;
+    document.getElementById('proveedor-preview-info').textContent = `${c.localidad} · ${c.zona}`;
+    prev.classList.remove('hidden');
+  }
+}
+
+function renderCompraItems() {
+  const el = document.getElementById('compra-items-list');
+  const count = document.getElementById('compra-items-count');
+  const totalCard = document.getElementById('compra-total-card');
+  const totalDisplay = document.getElementById('compra-total-display');
+  count.textContent = compraItems.length + '/6';
+  if (!compraItems.length) {
+    el.innerHTML = '<div class="empty-items"><span style="font-size:32px">📦</span><div class="empty-items-text">Sin productos agregados</div></div>';
+    totalCard.classList.add('hidden');
+    return;
+  }
+  const total = compraItems.reduce((s, i) => s + i.subtotal, 0);
+  totalDisplay.textContent = formatCurrency(total);
+  totalCard.classList.remove('hidden');
+  el.innerHTML = compraItems.map((item, idx) => `
+    <div class="item-row">
+      <div class="item-info">
+        <div class="item-name">${item.nombre}</div>
+        <div class="item-sub">${item.presentacion}</div>
+        <div style="font-size:12px;color:#1A3A6B;margin-top:2px">
+          Precio compra: ${formatCurrency(item.precio_unitario)} × ${item.cantidad} = ${formatCurrency(item.subtotal)}
+        </div>
+      </div>
+      <div class="item-actions">
+        <button class="qty-btn" onclick="changeCompraQty(${idx},-1)">−</button>
+        <span class="qty-val">${item.cantidad}</span>
+        <button class="qty-btn" onclick="changeCompraQty(${idx},1)">＋</button>
+        <button class="remove-btn" onclick="removeCompraItem(${idx})">✕</button>
+      </div>
+    </div>`).join('');
+  document.getElementById('add-compra-product-btn').style.display = compraItems.length >= 6 ? 'none' : '';
+}
+
+function changeCompraQty(idx, delta) {
+  compraItems[idx].cantidad = Math.max(1, compraItems[idx].cantidad + delta);
+  compraItems[idx].subtotal = compraItems[idx].precio_unitario * compraItems[idx].cantidad;
+  renderCompraItems();
+}
+
+function removeCompraItem(idx) {
+  compraItems.splice(idx, 1);
+  renderCompraItems();
+}
+
+function showCompraProductModal() {
+  document.getElementById('compra-product-modal').classList.remove('hidden');
+  document.getElementById('compra-modal-search').value = '';
+  renderCompraModalProducts(allProductos);
+}
+
+function hideCompraProductModal() {
+  document.getElementById('compra-product-modal').classList.add('hidden');
+}
+
+function renderCompraModalProducts(list) {
+  const el = document.getElementById('compra-modal-list');
+  if (!list.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:#94A3B8">Sin productos</div>'; return; }
+  el.innerHTML = list.map(p => `
+    <div class="modal-item" onclick="addCompraProduct('${p.id}')">
+      <div class="modal-item-info">
+        <div class="modal-item-name">${p.nombre}</div>
+        <div class="modal-item-sub">${p.presentacion_tipo} ${p.presentacion_cantidad} ${p.unidad_medida}</div>
+      </div>
+      <div>
+        <div class="modal-item-price">${formatCurrency(p.precio_unitario * p.presentacion_cantidad)}</div>
+        <div class="modal-item-added" style="font-size:10px;color:#94A3B8">Toque para editar precio</div>
+      </div>
+    </div>`).join('');
+}
+
+function filterCompraModalProducts() {
+  const q = document.getElementById('compra-modal-search').value.toLowerCase();
+  renderCompraModalProducts(q ? allProductos.filter(p => p.nombre.toLowerCase().includes(q)) : allProductos);
+}
+
+function addCompraProduct(productId) {
+  const prod = allProductos.find(p => p.id === productId);
+  if (!prod) return;
+  const precioVenta = prod.precio_unitario * prod.presentacion_cantidad;
+  const precioCompra = prompt(`Precio de COMPRA para "${prod.nombre}" (${prod.presentacion_tipo} ${prod.presentacion_cantidad} ${prod.unidad_medida}):\n\nPrecio de venta: ${formatCurrency(precioVenta)}\nIngresá el precio de compra:`, Math.round(precioVenta * 0.7));
+  if (precioCompra === null) return;
+  const precio = parseFloat(precioCompra);
+  if (isNaN(precio) || precio <= 0) { showToast('Precio inválido', 'error'); return; }
+  const existing = compraItems.findIndex(i => i.producto_id === productId);
+  if (existing >= 0) {
+    compraItems[existing].cantidad++;
+    compraItems[existing].precio_unitario = precio;
+    compraItems[existing].subtotal = precio * compraItems[existing].cantidad;
+  } else {
+    compraItems.push({ producto_id: productId, nombre: prod.nombre, presentacion: `${prod.presentacion_tipo} ${prod.presentacion_cantidad} ${prod.unidad_medida}`, precio_unitario: precio, cantidad: 1, subtotal: precio });
+  }
+  hideCompraProductModal();
+  renderCompraItems();
+}
+
+async function saveCompra() {
+  const proveedorId = document.getElementById('cmp-proveedor').value;
+  if (!proveedorId) { showToast('Seleccioná un proveedor', 'error'); return; }
+  if (!compraItems.length) { showToast('Agregá al menos un producto', 'error'); return; }
+  const total = compraItems.reduce((s, i) => s + i.subtotal, 0);
+  try {
+    if (editingCompraId) {
+      await api('PATCH', `compras?id=eq.${editingCompraId}`, { proveedor_id: proveedorId, total });
+      await api('DELETE', `compra_items?compra_id=eq.${editingCompraId}`);
+      for (const item of compraItems) {
+        await api('POST', 'compra_items', { compra_id: editingCompraId, producto_id: item.producto_id, cantidad: item.cantidad, precio_unitario: item.precio_unitario, subtotal: item.subtotal });
+      }
+      showToast('✅ Compra actualizada');
+    } else {
+      const fecha = new Date().toISOString().split('T')[0];
+      const data = await api('GET', `compras?fecha=eq.${fecha}&select=id`);
+      const sec = (data?.length || 0) + 1;
+      const yy = fecha.slice(2,4), mm = fecha.slice(5,7), dd = fecha.slice(8,10);
+      const numero_compra = `C${yy}${mm}${dd}-${String(sec).padStart(2,'0')}`;
+      const [compra] = await api('POST', 'compras', { numero_compra, proveedor_id: proveedorId, fecha, total });
+      for (const item of compraItems) {
+        await api('POST', 'compra_items', { compra_id: compra.id, producto_id: item.producto_id, cantidad: item.cantidad, precio_unitario: item.precio_unitario, subtotal: item.subtotal });
+      }
+      showToast('✅ Compra registrada: #' + numero_compra);
+    }
+    await loadCompras();
+    goTo('compras');
+  } catch (e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+function editCompra(id) {
+  showForm('compra', id);
+}
+
+async function deleteCompra(id, num) {
+  if (!confirm(`¿Eliminar la compra #${num}?`)) return;
+  try {
+    await api('DELETE', `compra_items?compra_id=eq.${id}`);
+    await api('DELETE', `compras?id=eq.${id}`);
+    allCompras = allCompras.filter(c => c.id !== id);
+    renderCompras(allCompras);
+    showToast('✅ Compra eliminada');
+  } catch (e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+async function showCompraDetail(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-detail-compra').classList.add('active');
+  const header = document.getElementById('main-header');
+  header.innerHTML = `
+    <button class="header-back" onclick="goTo('compras')">‹</button>
+    <div class="header-title">Detalle Compra</div>
+    <button class="header-action" onclick="editCompra('${id}')">Editar</button>`;
+  const content = document.getElementById('detail-compra-content');
+  content.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const arr = await api('GET', `compras?id=eq.${id}&select=*,proveedor:clientes(*)`);
+    const c = arr[0];
+    const items = await api('GET', `compra_items?compra_id=eq.${id}&select=*,producto:productos(*)`);
+    const itemsHTML = items.map(i => `
+      <div class="detail-item-row">
+        <div class="detail-item-info">
+          <div class="detail-item-name">${i.producto?.nombre}</div>
+          <div class="detail-item-sub">${i.producto?.presentacion_tipo} ${i.producto?.presentacion_cantidad} ${i.producto?.unidad_medida}</div>
+          <div style="font-size:11px;color:#C8102E;margin-top:2px;font-weight:600">${formatCurrency(i.precio_unitario)} × ${i.cantidad} unidades</div>
+        </div>
+        <div class="detail-item-total">${formatCurrency(i.subtotal)}</div>
+      </div>`).join('');
+    content.innerHTML = `
+      <button class="pdf-btn" style="background:#C8102E" onclick="generarPDFCompra('${c.id}')">📄 Descargar / Compartir PDF</button>
+      <div class="estado-header" style="background:#C8102E">
+        <div class="estado-icon">🏪</div>
+        <div class="estado-info">
+          <div class="estado-lbl">COMPRA</div>
+          <div class="estado-val">#${c.numero_compra}</div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-title">🏪 Datos de la Compra</div>
+        <div class="detail-row"><div class="detail-key">Número</div><div class="detail-val">#${c.numero_compra}</div></div>
+        <div class="divider"></div>
+        <div class="detail-row"><div class="detail-key">Fecha</div><div class="detail-val">${formatDate(c.fecha)}</div></div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-title">🏢 Proveedor</div>
+        <div style="font-size:17px;font-weight:800;color:#0B1F3A;margin-bottom:8px">${c.proveedor?.nombre}</div>
+        <div style="font-size:13px;color:#64748B;margin-bottom:4px">CUIT: ${c.proveedor?.cuit}</div>
+        <div style="font-size:13px;color:#64748B;margin-bottom:4px">${c.proveedor?.calle} ${c.proveedor?.altura}, ${c.proveedor?.localidad}</div>
+        <div style="font-size:13px;color:#64748B">Zona: ${c.proveedor?.zona}</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-title">📦 Productos (${items.length})</div>
+        ${itemsHTML}
+        <div class="grand-total-row">
+          <div class="grand-total-key">TOTAL COMPRA</div>
+          <div class="grand-total-val" style="color:#C8102E">${formatCurrency(c.total)}</div>
+        </div>
+      </div>`;
+  } catch (e) {
+    content.innerHTML = `<div class="empty-state"><div class="empty-title">Error al cargar</div><div class="empty-sub">${e.message}</div></div>`;
+  }
+}
+
+function generarPDFCompra(id) {
+  const compra = allCompras.find(c => c.id === id);
+  if (!compra) return;
+  api('GET', `compras?id=eq.${id}&select=*,proveedor:clientes(*)`).then(arr => {
+    const c = arr[0];
+    return api('GET', `compra_items?compra_id=eq.${id}&select=*,producto:productos(*)`).then(items => {
+      const filas = items.map(i => `
+        <tr>
+          <td>${i.producto?.nombre}<br><small style="color:#666">${i.producto?.presentacion_tipo} ${i.producto?.presentacion_cantidad} ${i.producto?.unidad_medida}</small></td>
+          <td style="text-align:center">${i.cantidad}</td>
+          <td style="text-align:right">${formatCurrency(i.precio_unitario)}</td>
+          <td style="text-align:right"><strong>${formatCurrency(i.subtotal)}</strong></td>
+        </tr>`).join('');
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <title>COMPRA #${c.numero_compra}</title>
+        <style>
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { font-family: Arial, sans-serif; padding: 40px; color: #111; font-size: 14px; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; border-bottom: 3px solid #0B1F3A; padding-bottom: 20px; }
+          .company h1 { font-size: 26px; color: #0B1F3A; letter-spacing: 1px; }
+          .company p { color: #666; font-size: 12px; margin-top: 4px; }
+          .doc-info { text-align: right; }
+          .doc-tipo { font-size: 20px; font-weight: 900; color: #C8102E; letter-spacing: 2px; }
+          .doc-num { font-size: 16px; font-weight: 700; color: #0B1F3A; margin-top: 4px; }
+          .doc-fecha { font-size: 12px; color: #666; margin-top: 4px; }
+          .section { margin-bottom: 24px; }
+          .section-title { font-size: 12px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+          .proveedor-nombre { font-size: 18px; font-weight: 800; color: #0B1F3A; }
+          .proveedor-info { font-size: 13px; color: #555; margin-top: 4px; line-height: 1.6; }
+          table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+          th { background: #0B1F3A; color: white; padding: 10px 12px; text-align: left; font-size: 13px; }
+          th:last-child, th:nth-child(2), th:nth-child(3) { text-align: right; }
+          td { padding: 10px 12px; border-bottom: 1px solid #eee; font-size: 13px; vertical-align: top; }
+          tr:nth-child(even) td { background: #f9f9f9; }
+          .total-row { display: flex; justify-content: flex-end; margin-top: 16px; }
+          .total-box { background: #C8102E; color: white; padding: 14px 24px; border-radius: 8px; text-align: right; }
+          .total-label { font-size: 11px; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; }
+          .total-val { font-size: 26px; font-weight: 900; margin-top: 4px; }
+          .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #ddd; font-size: 11px; color: #999; text-align: center; }
+          @media print { @page { margin: 20mm; } }
+        </style>
+      </head><body>
+        <div class="header">
+          <div class="company">
+            <h1>ADROGUÉ INSUMOS</h1>
+            <p>Orden de compra interna</p>
+          </div>
+          <div class="doc-info">
+            <div class="doc-tipo">COMPRA</div>
+            <div class="doc-num">#${c.numero_compra}</div>
+            <div class="doc-fecha">${formatDate(c.fecha)}</div>
+          </div>
+        </div>
+        <div class="section">
+          <div class="section-title">Proveedor</div>
+          <div class="proveedor-nombre">${c.proveedor?.nombre}</div>
+          <div class="proveedor-info">
+            CUIT: ${c.proveedor?.cuit}<br>
+            ${c.proveedor?.calle} ${c.proveedor?.altura}, ${c.proveedor?.localidad}
+            ${c.proveedor?.whatsapp ? '<br>WhatsApp: ' + c.proveedor.whatsapp : ''}
+          </div>
+        </div>
+        <div class="section">
+          <div class="section-title">Detalle</div>
+          <table>
+            <thead><tr>
+              <th>Producto</th>
+              <th style="text-align:center">Cant.</th>
+              <th style="text-align:right">Precio Compra</th>
+              <th style="text-align:right">Subtotal</th>
+            </tr></thead>
+            <tbody>${filas}</tbody>
+          </table>
+          <div class="total-row">
+            <div class="total-box">
+              <div class="total-label">Total Compra</div>
+              <div class="total-val">${formatCurrency(c.total)}</div>
+            </div>
+          </div>
+        </div>
+        <div class="footer">Orden de compra interna — Adrogué Insumos</div>
+        <script>window.onload = function(){ window.print(); }<\/script>
+      </body></html>`;
+      const win = window.open('', '_blank');
+      win.document.write(html);
+      win.document.close();
+      setTimeout(() => { try { window.focus(); } catch(e) {} }, 500);
+      win.addEventListener('afterprint', () => { try { win.close(); window.focus(); } catch(e) {} });
+    });
+  }).catch(e => showToast('❌ Error al generar PDF: ' + e.message, 'error'));
 }
 
 // ── BOOT ─────────────────────────────────────────────────────
