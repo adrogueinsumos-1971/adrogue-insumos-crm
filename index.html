@@ -1082,7 +1082,7 @@ function updateDashboard() {
   const now = new Date();
   const mes = now.getMonth(), anio = now.getFullYear();
   const ventasMes = allPedidos
-    .filter(p => { const d = new Date(p.fecha); return d.getMonth() === mes && d.getFullYear() === anio; })
+    .filter(p => { const d = new Date(p.fecha); return p.tipo_doc === 'Pedido' && d.getMonth() === mes && d.getFullYear() === anio; })
     .reduce((s, p) => s + (p.total || 0), 0);
   const comprasMes = allCompras
     .filter(c => { const d = new Date(c.fecha); return d.getMonth() === mes && d.getFullYear() === anio; })
