@@ -1859,6 +1859,7 @@ function generarPDF(id) {
           .total-val { font-size: 26px; font-weight: 900; margin-top: 4px; }
           .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #ddd; font-size: 11px; color: #999; text-align: center; }
           @media print { @page { margin: 20mm; } }
+          @page { margin: 20mm; }
         </style>
       </head><body>
         <div class="header">
@@ -1900,8 +1901,8 @@ function generarPDF(id) {
           </div>
         </div>
         <div class="footer">
-          ${tipo === 'PRESUPUESTO' ? 'Presupuesto válido por 7 días. Precios sujetos a variación. No incluyen IVA' : 'Gracias por su compra.'}<br>
-          Adrogué Insumos — Productos y servicios para la industria
+          ${tipo === 'PRESUPUESTO' ? 'Presupuesto válido por 7 días. Precios sujetos a variación. No incluyen IVA.' : 'Gracias por su compra.'}<br>
+          Adrogué Insumos - Productos y Servicios para la Industria.
         </div>
         <script>window.onload = function(){ window.print(); }<\/script>
       </body></html>`;
@@ -2268,6 +2269,7 @@ function generarPDFCompra(id) {
           .total-val { font-size: 26px; font-weight: 900; margin-top: 4px; }
           .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #ddd; font-size: 11px; color: #999; text-align: center; }
           @media print { @page { margin: 20mm; } }
+          @page { margin: 20mm; }
         </style>
       </head><body>
         <div class="header">
