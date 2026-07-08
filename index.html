@@ -1670,6 +1670,8 @@ async function toggleEstadoPresupuesto(id, estadoActual) {
     await api('PATCH', `pedidos?id=eq.${id}`, { estado_presupuesto: nuevo });
     const p = allPedidos.find(x => x.id === id);
     if (p) p.estado_presupuesto = nuevo;
+    renderPedidos(allPedidos);
+    updateDashboard();
     showToast(`✅ Presupuesto: ${nuevo}`);
     showPedidoDetail(id);
   } catch (e) { showToast('❌ ' + e.message, 'error'); }
