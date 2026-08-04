@@ -138,6 +138,25 @@ body {
 
 /* ── DASHBOARD ── */
 .greeting { margin-bottom: 20px; }
+.bu-tabs { display: flex; gap: 0; background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
+.bu-tab { flex: 1; padding: 9px 8px; font-size: 11px; font-weight: 700; text-align: center; border: none; background: transparent; color: var(--text2); cursor: pointer; transition: all .2s; line-height: 1.3; }
+.bu-tab.active { background: var(--navy); color: #fff; }
+.bul-item-form { background: var(--card); border: 1.5px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+.bul-item-form .bul-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.bul-item-form .bul-row.full { grid-template-columns: 1fr; }
+.bul-item-form label { font-size: 11px; font-weight: 700; color: var(--text2); display: block; margin-bottom: 3px; }
+.bul-item-form input, .bul-item-form select { width: 100%; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--bg); color: var(--text); }
+.bul-item-form .bul-subtotal { font-size: 13px; font-weight: 800; color: var(--navy); text-align: right; padding: 4px 0; }
+.bul-item-card { background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+.bul-item-card .bul-card-title { font-size: 13px; font-weight: 800; color: var(--text); }
+.bul-item-card .bul-card-specs { font-size: 11px; color: var(--text2); margin-top: 3px; line-height: 1.5; }
+.bul-item-card .bul-card-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.bul-item-card .bul-card-price { font-size: 12px; color: var(--text2); }
+.bul-item-card .bul-card-subtotal { font-size: 14px; font-weight: 800; color: var(--navy); }
+.moneda-section { background: var(--card); border: 1.5px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+.moneda-section label { font-size: 11px; font-weight: 700; color: var(--text2); display: block; margin-bottom: 3px; }
+.moneda-section select, .moneda-section input { width: 100%; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--bg); color: var(--text); margin-bottom: 8px; }
+.moneda-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .greeting-text { font-size: 24px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; }
 .greeting-sub { font-size: 13px; color: var(--text2); margin-top: 3px; text-transform: capitalize; }
 .hero-card {
@@ -470,8 +489,13 @@ body {
         <div class="greeting-text" id="greeting-text">Buenos días 👋</div>
         <div class="greeting-sub" id="greeting-date"></div>
       </div>
+      <div class="bu-tabs">
+        <button class="bu-tab active" id="bu-tab-lub" onclick="setBU('lubricantes')">🛢 Lubricantes y<br>Aux. Químicos</button>
+        <button class="bu-tab" id="bu-tab-bul" onclick="setBU('buloneria')">🔩 Bulonería y<br>Fijaciones</button>
+        <button class="bu-tab" id="bu-tab-all" onclick="setBU('consolidado')">📊 Consolidado</button>
+      </div>
       <div class="hero-card">
-        <div class="hero-label">💰 Ventas del mes</div>
+        <div class="hero-label" id="dash-hero-label">💰 Ventas del mes</div>
         <div class="hero-value" id="dash-ventas">$0</div>
         <div class="hero-badge"><span id="dash-total-pedidos">0 pedidos en total</span></div>
       </div>
@@ -518,7 +542,7 @@ body {
           <div class="stat-label">Pedidos Cobrados</div>
         </div>
       </div>
-      <div class="section-title">Compras del mes</div>
+      <div class="section-title" id="dash-compras-title">Compras del mes</div>
       <div class="stats-grid">
         <div class="stat-card" style="border-left-color:#C8102E" onclick="goTo('compras')">
           <div class="stat-icon">🏪</div>
@@ -529,6 +553,62 @@ body {
           <div class="stat-icon">📊</div>
           <div class="stat-value" id="dash-margen-mes" style="font-size:14px">—</div>
           <div class="stat-label">Margen (V - C)</div>
+        </div>
+      </div>
+      <div id="dash-consolidado-section" style="display:none">
+        <div class="section-title">Consolidado — Lubricantes</div>
+        <div class="stats-grid">
+          <div class="stat-card" style="border-left-color:#0B1F3A">
+            <div class="stat-icon">💰</div>
+            <div class="stat-value" id="dash-lub-ventas" style="font-size:13px">—</div>
+            <div class="stat-label">Ventas</div>
+          </div>
+          <div class="stat-card" style="border-left-color:#C8102E">
+            <div class="stat-icon">🏪</div>
+            <div class="stat-value" id="dash-lub-compras" style="font-size:13px">—</div>
+            <div class="stat-label">Compras</div>
+          </div>
+          <div class="stat-card" style="border-left-color:#16A34A">
+            <div class="stat-icon">📊</div>
+            <div class="stat-value" id="dash-lub-margen" style="font-size:13px">—</div>
+            <div class="stat-label">Margen</div>
+          </div>
+        </div>
+        <div class="section-title">Consolidado — Bulonería</div>
+        <div class="stats-grid">
+          <div class="stat-card" style="border-left-color:#0B1F3A">
+            <div class="stat-icon">💰</div>
+            <div class="stat-value" id="dash-bul-ventas" style="font-size:13px">—</div>
+            <div class="stat-label">Ventas</div>
+          </div>
+          <div class="stat-card" style="border-left-color:#C8102E">
+            <div class="stat-icon">🏪</div>
+            <div class="stat-value" id="dash-bul-compras" style="font-size:13px">—</div>
+            <div class="stat-label">Compras</div>
+          </div>
+          <div class="stat-card" style="border-left-color:#16A34A">
+            <div class="stat-icon">📊</div>
+            <div class="stat-value" id="dash-bul-margen" style="font-size:13px">—</div>
+            <div class="stat-label">Margen</div>
+          </div>
+        </div>
+        <div class="section-title">Total Consolidado</div>
+        <div class="stats-grid">
+          <div class="stat-card" style="border-left-color:#0B1F3A">
+            <div class="stat-icon">💰</div>
+            <div class="stat-value" id="dash-tot-ventas" style="font-size:13px">—</div>
+            <div class="stat-label">Ventas Totales</div>
+          </div>
+          <div class="stat-card" style="border-left-color:#C8102E">
+            <div class="stat-icon">🏪</div>
+            <div class="stat-value" id="dash-tot-compras" style="font-size:13px">—</div>
+            <div class="stat-label">Compras Totales</div>
+          </div>
+          <div class="stat-card" style="border-left-color:#16A34A">
+            <div class="stat-icon">📊</div>
+            <div class="stat-value" id="dash-tot-margen" style="font-size:13px">—</div>
+            <div class="stat-label">Margen Total</div>
+          </div>
         </div>
       </div>
       <div class="section-title">Acciones rápidas</div>
@@ -650,13 +730,32 @@ body {
           <div class="field-error hidden" id="f-localidad-err">Requerido</div>
         </div>
         <div class="field">
-          <label>Zona <span class="req">*</span></label>
+          <label>Provincia <span class="req">*</span></label>
           <select id="f-zona">
-            <option value="CABA">CABA</option>
-            <option value="GBA Norte">GBA Norte</option>
-            <option value="GBA Oeste">GBA Oeste</option>
-            <option value="GBA Sur" selected>GBA Sur</option>
-            <option value="La Plata">La Plata</option>
+            <option value="Buenos Aires">Buenos Aires</option>
+            <option value="Catamarca">Catamarca</option>
+            <option value="Chaco">Chaco</option>
+            <option value="Chubut">Chubut</option>
+            <option value="Ciudad Autónoma de Buenos Aires">Ciudad Autónoma de Buenos Aires</option>
+            <option value="Córdoba">Córdoba</option>
+            <option value="Corrientes">Corrientes</option>
+            <option value="Entre Ríos">Entre Ríos</option>
+            <option value="Formosa">Formosa</option>
+            <option value="Jujuy">Jujuy</option>
+            <option value="La Pampa">La Pampa</option>
+            <option value="La Rioja">La Rioja</option>
+            <option value="Mendoza">Mendoza</option>
+            <option value="Misiones">Misiones</option>
+            <option value="Neuquén">Neuquén</option>
+            <option value="Río Negro">Río Negro</option>
+            <option value="Salta">Salta</option>
+            <option value="San Juan">San Juan</option>
+            <option value="San Luis">San Luis</option>
+            <option value="Santa Cruz">Santa Cruz</option>
+            <option value="Santa Fe">Santa Fe</option>
+            <option value="Santiago del Estero">Santiago del Estero</option>
+            <option value="Tierra del Fuego">Tierra del Fuego</option>
+            <option value="Tucumán">Tucumán</option>
           </select>
         </div>
       </div>
@@ -804,6 +903,142 @@ body {
     </div>
   </div>
 
+  <!-- BULONERIA PEDIDO FORM -->
+  <div id="page-form-bul-pedido" class="page">
+    <div class="content">
+      <div class="form-section">
+        <div class="step-header">
+          <div class="step-badge">1</div>
+          <div class="step-title">Seleccionar Cliente</div>
+        </div>
+        <div class="field">
+          <label>Cliente <span class="req">*</span></label>
+          <select id="bul-ped-cliente" onchange="updateBulPedClientePreview()">
+            <option value="">— Seleccionar cliente —</option>
+          </select>
+        </div>
+        <div class="cliente-preview hidden" id="bul-ped-cliente-preview">
+          <div class="cliente-preview-name" id="bul-ped-cliente-name"></div>
+          <div class="cliente-preview-info" id="bul-ped-cliente-info"></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="step-header">
+          <div class="step-badge">2</div>
+          <div class="step-title">Moneda y Cotización</div>
+        </div>
+        <div class="moneda-section">
+          <div class="moneda-grid">
+            <div>
+              <label>Moneda</label>
+              <select id="bul-ped-moneda" onchange="updateBulPedMoneda()">
+                <option value="ARS">$ Pesos</option>
+                <option value="USD">U$D Dólares</option>
+              </select>
+            </div>
+            <div id="bul-ped-cotiz-wrap">
+              <label>Cotiz. BNA (U$D)</label>
+              <input type="number" id="bul-ped-cotizacion" placeholder="Ej: 1200" min="0" step="0.01" oninput="recalcBulPedTotal()">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="step-header">
+          <div class="step-badge">3</div>
+          <div class="step-title">Ítems</div>
+          <div class="step-count" id="bul-ped-items-count">0/10</div>
+        </div>
+        <div id="bul-ped-items-list">
+          <div class="empty-items"><span style="font-size:32px">🔩</span><div class="empty-items-text">Sin ítems agregados</div></div>
+        </div>
+        <button class="add-product-btn" id="bul-ped-add-btn" onclick="showBulItemForm('ped')">＋ Agregar ítem</button>
+      </div>
+      <div id="bul-ped-item-form-wrap"></div>
+      <div class="total-card hidden" id="bul-ped-total-card">
+        <div class="total-card-label" id="bul-ped-total-label">Total del pedido</div>
+        <div class="total-card-value" id="bul-ped-total-display">0</div>
+      </div>
+      <div class="form-section" style="margin-top:0">
+        <div class="form-section-title">📄 Tipo de documento</div>
+        <div class="field">
+          <label>Crear como <span class="req">*</span></label>
+          <select id="bul-ped-tipo-doc" onchange="updateBulPedTipo()">
+            <option value="Presupuesto">📋 Presupuesto</option>
+            <option value="Pedido">🛒 Pedido</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-outline" onclick="cancelForm()">Cancelar</button>
+        <button class="btn-primary" id="bul-ped-save-btn" onclick="saveBulPedido()">Crear Presupuesto</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BULONERIA COMPRA FORM -->
+  <div id="page-form-bul-compra" class="page">
+    <div class="content">
+      <div class="form-section">
+        <div class="step-header">
+          <div class="step-badge">1</div>
+          <div class="step-title">Seleccionar Proveedor</div>
+        </div>
+        <div class="field">
+          <label>Proveedor <span class="req">*</span></label>
+          <select id="bul-cmp-proveedor" onchange="updateBulCmpProveedorPreview()">
+            <option value="">— Seleccionar proveedor —</option>
+          </select>
+        </div>
+        <div class="cliente-preview hidden" id="bul-cmp-proveedor-preview">
+          <div class="cliente-preview-name" id="bul-cmp-proveedor-name"></div>
+          <div class="cliente-preview-info" id="bul-cmp-proveedor-info"></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="step-header">
+          <div class="step-badge">2</div>
+          <div class="step-title">Moneda y Cotización</div>
+        </div>
+        <div class="moneda-section">
+          <div class="moneda-grid">
+            <div>
+              <label>Moneda</label>
+              <select id="bul-cmp-moneda" onchange="updateBulCmpMoneda()">
+                <option value="ARS">$ Pesos</option>
+                <option value="USD">U$D Dólares</option>
+              </select>
+            </div>
+            <div id="bul-cmp-cotiz-wrap">
+              <label>Cotiz. BNA (U$D)</label>
+              <input type="number" id="bul-cmp-cotizacion" placeholder="Ej: 1200" min="0" step="0.01" oninput="recalcBulCmpTotal()">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="step-header">
+          <div class="step-badge">3</div>
+          <div class="step-title">Ítems</div>
+          <div class="step-count" id="bul-cmp-items-count">0/10</div>
+        </div>
+        <div id="bul-cmp-items-list">
+          <div class="empty-items"><span style="font-size:32px">🔩</span><div class="empty-items-text">Sin ítems agregados</div></div>
+        </div>
+        <button class="add-product-btn" id="bul-cmp-add-btn" onclick="showBulItemForm('cmp')">＋ Agregar ítem</button>
+      </div>
+      <div id="bul-cmp-item-form-wrap"></div>
+      <div class="total-card hidden" id="bul-cmp-total-card">
+        <div class="total-card-label" id="bul-cmp-total-label">Total de la compra</div>
+        <div class="total-card-value" id="bul-cmp-total-display">0</div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-outline" onclick="cancelForm()">Cancelar</button>
+        <button class="btn-primary" onclick="saveBulCompra()">Registrar Compra</button>
+      </div>
+    </div>
+  </div>
+
   <div id="page-detail-pedido" class="page">
     <div class="content" id="detail-pedido-content"></div>
   </div>
@@ -916,6 +1151,7 @@ const SUPABASE_URL = 'https://issvswvozypwwenbxatt.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlzc3Zzd3Zvenlwd3dlbmJ4YXR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNDE3ODUsImV4cCI6MjA5NTkxNzc4NX0.6msrfZJVMUzmSXZtXhxI5FYq0gIN-jvg5J0hOkPYVT8';
 let SESSION_TOKEN = null;
 let currentPage = 'dashboard';
+let currentBU = 'lubricantes'; // 'lubricantes' | 'buloneria' | 'consolidado'
 let editingId = null;
 let pedidoItems = [];
 let allClientes = [], allProductos = [], allPedidos = [], allCompras = [];
@@ -1050,52 +1286,84 @@ async function loadClientes() {
 async function loadProductos() {
   try {
     allProductos = await api('GET', 'productos?order=nombre.asc') || [];
-    renderProductos(allProductos);
+    renderProductos(getFilteredProductos());
   } catch (e) { console.error(e); }
+}
+
+function getFilteredProductos() {
+  if (currentBU === 'consolidado') return allProductos;
+  return allProductos.filter(p => (p.unidad_negocio || 'lubricantes') === currentBU);
 }
 
 async function loadPedidos() {
   try {
     allPedidos = await api('GET', 'pedidos?order=created_at.desc&select=*,cliente:clientes(id,nombre,localidad,zona,cuit)') || [];
-    renderPedidos(allPedidos);
+    renderPedidos(getFilteredPedidos());
   } catch (e) { console.error(e); }
 }
 
+function getFilteredPedidos() {
+  if (currentBU === 'consolidado') return allPedidos;
+  return allPedidos.filter(p => (p.unidad_negocio || 'lubricantes') === currentBU);
+}
+
 // ── DASHBOARD ────────────────────────────────────────────────
+function calcBUStats(bu, mes, anio) {
+  const pedBU = allPedidos.filter(p => (p.unidad_negocio || 'lubricantes') === bu);
+  const cmpBU = allCompras.filter(c => (c.unidad_negocio || 'lubricantes') === bu);
+  const ventas = pedBU.filter(p => { const d = new Date(p.fecha); return p.tipo_doc === 'Pedido' && d.getMonth() === mes && d.getFullYear() === anio; }).reduce((s,p) => s + (p.total||0), 0);
+  const compras = cmpBU.filter(c => { const d = new Date(c.fecha); return d.getMonth() === mes && d.getFullYear() === anio; }).reduce((s,c) => s + (c.total||0), 0);
+  return { ventas, compras, margen: ventas - compras };
+}
+
 function updateDashboard() {
-  document.getElementById('dash-clientes').textContent = allClientes.length;
-  document.getElementById('dash-productos').textContent = allProductos.length;
-  const presupuestos = allPedidos.filter(p => p.tipo_doc === 'Presupuesto');
-  const pedidos = allPedidos.filter(p => p.tipo_doc === 'Pedido');
-  const presupPend = presupuestos.filter(p => p.estado_presupuesto === 'Borrador').length;
-  const presupApro = presupuestos.filter(p => p.estado_presupuesto === 'Enviado').length;
-  const pendientes = pedidos.filter(p => p.estado === 'Pendiente').length;
-  const entregados = pedidos.filter(p => p.estado === 'Entregado').length;
-  const porCobrar = pedidos.filter(p => p.cobrado === 'Para cobrar').length;
-  const cobrados = pedidos.filter(p => p.cobrado === 'Cobrado').length;
-  document.getElementById('dash-presup-pend').textContent = presupPend;
-  document.getElementById('dash-presup-apro').textContent = presupApro;
-  document.getElementById('dash-pendientes').textContent = pendientes;
-  document.getElementById('dash-entregados').textContent = entregados;
-  document.getElementById('dash-por-cobrar').textContent = porCobrar;
-  document.getElementById('dash-cobrados').textContent = cobrados;
   const now = new Date();
   const mes = now.getMonth(), anio = now.getFullYear();
-  const ventasMes = allPedidos
-    .filter(p => { const d = new Date(p.fecha); return p.tipo_doc === 'Pedido' && d.getMonth() === mes && d.getFullYear() === anio; })
-    .reduce((s, p) => s + (p.total || 0), 0);
-  const comprasMes = allCompras
-    .filter(c => { const d = new Date(c.fecha); return d.getMonth() === mes && d.getFullYear() === anio; })
-    .reduce((s, c) => s + (c.total || 0), 0);
+  const isConsolidado = currentBU === 'consolidado';
+  const activePedidos = isConsolidado ? allPedidos : allPedidos.filter(p => (p.unidad_negocio || 'lubricantes') === currentBU);
+  const activeCompras = isConsolidado ? allCompras : allCompras.filter(c => (c.unidad_negocio || 'lubricantes') === currentBU);
+  const activeProductos = isConsolidado ? allProductos : allProductos.filter(p => (p.unidad_negocio || 'lubricantes') === currentBU);
+
+  document.getElementById('dash-clientes').textContent = allClientes.length;
+  document.getElementById('dash-productos').textContent = activeProductos.length;
+
+  const presupuestos = activePedidos.filter(p => p.tipo_doc === 'Presupuesto');
+  const pedidos = activePedidos.filter(p => p.tipo_doc === 'Pedido');
+  document.getElementById('dash-presup-pend').textContent = presupuestos.filter(p => p.estado_presupuesto === 'Borrador').length;
+  document.getElementById('dash-presup-apro').textContent = presupuestos.filter(p => p.estado_presupuesto === 'Enviado').length;
+  document.getElementById('dash-pendientes').textContent = pedidos.filter(p => p.estado === 'Pendiente').length;
+  document.getElementById('dash-entregados').textContent = pedidos.filter(p => p.estado === 'Entregado').length;
+  document.getElementById('dash-por-cobrar').textContent = pedidos.filter(p => p.cobrado === 'Para cobrar').length;
+  document.getElementById('dash-cobrados').textContent = pedidos.filter(p => p.cobrado === 'Cobrado').length;
+
+  const ventasMes = pedidos.filter(p => { const d = new Date(p.fecha); return d.getMonth() === mes && d.getFullYear() === anio; }).reduce((s,p) => s + (p.total||0), 0);
+  const comprasMes = activeCompras.filter(c => { const d = new Date(c.fecha); return d.getMonth() === mes && d.getFullYear() === anio; }).reduce((s,c) => s + (c.total||0), 0);
   const margenMes = ventasMes - comprasMes;
+
+  const buLabel = { lubricantes: '🛢 Lubricantes', buloneria: '🔩 Bulonería', consolidado: '📊 Consolidado' }[currentBU];
+  document.getElementById('dash-hero-label').textContent = `💰 Ventas del mes · ${buLabel}`;
   document.getElementById('dash-ventas').textContent = formatCurrency(ventasMes);
-  document.getElementById('dash-total-pedidos').textContent = `${allPedidos.length} documentos en total`;
+  document.getElementById('dash-total-pedidos').textContent = `${activePedidos.length} documentos`;
   const dashComprasEl = document.getElementById('dash-compras-mes');
   const dashMargenEl = document.getElementById('dash-margen-mes');
+  const dashComprasTitle = document.getElementById('dash-compras-title');
+  if (dashComprasTitle) dashComprasTitle.textContent = `Compras del mes · ${buLabel}`;
   if (dashComprasEl) dashComprasEl.textContent = formatCurrency(comprasMes);
-  if (dashMargenEl) {
-    dashMargenEl.textContent = formatCurrency(margenMes);
-    dashMargenEl.style.color = margenMes >= 0 ? 'var(--success)' : 'var(--danger)';
+  if (dashMargenEl) { dashMargenEl.textContent = formatCurrency(margenMes); dashMargenEl.style.color = margenMes >= 0 ? 'var(--success)' : 'var(--danger)'; }
+
+  // Consolidated section
+  const consolidadoSection = document.getElementById('dash-consolidado-section');
+  if (consolidadoSection) {
+    consolidadoSection.style.display = isConsolidado ? '' : 'none';
+    if (isConsolidado) {
+      const lub = calcBUStats('lubricantes', mes, anio);
+      const bul = calcBUStats('buloneria', mes, anio);
+      const tot = { ventas: lub.ventas + bul.ventas, compras: lub.compras + bul.compras, margen: lub.margen + bul.margen };
+      const setVal = (id, val) => { const el = document.getElementById(id); if (el) { el.textContent = formatCurrency(val); el.style.color = (id.includes('margen') && val < 0) ? 'var(--danger)' : ''; } };
+      setVal('dash-lub-ventas', lub.ventas); setVal('dash-lub-compras', lub.compras); setVal('dash-lub-margen', lub.margen);
+      setVal('dash-bul-ventas', bul.ventas); setVal('dash-bul-compras', bul.compras); setVal('dash-bul-margen', bul.margen);
+      setVal('dash-tot-ventas', tot.ventas); setVal('dash-tot-compras', tot.compras); setVal('dash-tot-margen', tot.margen);
+    }
   }
 }
 
@@ -1161,6 +1429,7 @@ function renderProductos(list) {
         <div class="card-info">
           <div class="card-name">${p.nombre}</div>
           <div class="card-sub">${p.presentacion_tipo} · ${p.presentacion_cantidad} ${p.unidad_medida}</div>
+        <div style="margin-top:4px"><span style="font-size:10px;background:#EDE9FE;color:#7C3AED;border-radius:4px;padding:2px 6px">${p.unidad_negocio === 'buloneria' ? '🔩 Bulonería' : '🛢 Lubricantes'}</span></div>
         </div>
       </div>
       <div class="price-row">
@@ -1248,7 +1517,7 @@ function renderPedidos(list) {
   }).join('');
 }
 
-function filterPedidos() { renderPedidos(allPedidos); }
+function filterPedidos() { renderPedidos(getFilteredPedidos()); }
 let docFilter = '';
 function setDocFilter(f) {
   docFilter = f;
@@ -1264,13 +1533,22 @@ function showForm(type, id = null) {
   if (type === 'compra') {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.getElementById('page-form-compra').classList.add('active');
     const header = document.getElementById('main-header');
-    header.innerHTML = `
-      <button class="header-back" onclick="goTo('compras')">‹</button>
-      <div class="header-title">${id ? 'Editar Compra' : 'Nueva Compra'}</div>
-      <div style="width:40px"></div>`;
-    setupCompraForm(id);
+    if (currentBU === 'buloneria') {
+      document.getElementById('page-form-bul-compra').classList.add('active');
+      header.innerHTML = `
+        <button class="header-back" onclick="goTo('compras')">‹</button>
+        <div class="header-title">${id ? 'Editar Compra' : 'Nueva Compra'} · 🔩</div>
+        <div style="width:40px"></div>`;
+      setupBulCompraForm(id);
+    } else {
+      document.getElementById('page-form-compra').classList.add('active');
+      header.innerHTML = `
+        <button class="header-back" onclick="goTo('compras')">‹</button>
+        <div class="header-title">${id ? 'Editar Compra' : 'Nueva Compra'}</div>
+        <div style="width:40px"></div>`;
+      setupCompraForm(id);
+    }
     return;
   }
   editingId = id;
@@ -1287,15 +1565,20 @@ function showForm(type, id = null) {
     <div style="width:40px"></div>`;
   if (type === 'cliente') setupClienteForm(id);
   if (type === 'producto') setupProductoForm(id);
-  if (type === 'pedido') setupPedidoForm(id);
+  if (type === 'pedido') {
+    if (currentBU === 'buloneria') setupBulPedidoForm(id);
+    else setupPedidoForm(id);
+  }
 }
 
 function cancelForm() {
-  const backs = ['page-form-cliente', 'page-form-producto', 'page-form-pedido', 'page-form-compra'];
+  const backs = ['page-form-cliente', 'page-form-producto', 'page-form-pedido', 'page-form-compra', 'page-form-bul-pedido', 'page-form-bul-compra'];
   const active = backs.find(p => document.getElementById(p).classList.contains('active'));
   if (active === 'page-form-cliente') goTo('clientes');
   else if (active === 'page-form-producto') goTo('productos');
   else if (active === 'page-form-compra') goTo('compras');
+  else if (active === 'page-form-bul-pedido') goTo('pedidos');
+  else if (active === 'page-form-bul-compra') goTo('compras');
   else goTo('pedidos');
 }
 
@@ -1305,7 +1588,7 @@ function setupClienteForm(id) {
     document.getElementById(`f-${f}`).value = '';
   });
   document.getElementById('f-iva').value = 'RI';
-  document.getElementById('f-zona').value = 'GBA Sur';
+  document.getElementById('f-zona').value = 'Buenos Aires';
   if (id) {
     const c = allClientes.find(x => x.id === id);
     if (c) {
@@ -1315,7 +1598,7 @@ function setupClienteForm(id) {
       document.getElementById('f-calle').value = c.calle || '';
       document.getElementById('f-altura').value = c.altura || '';
       document.getElementById('f-localidad').value = c.localidad || '';
-      document.getElementById('f-zona').value = c.zona || 'GBA Sur';
+      document.getElementById('f-zona').value = c.zona || 'Buenos Aires';
       document.getElementById('f-contacto').value = c.contacto_nombre || '';
       document.getElementById('f-whatsapp').value = c.whatsapp || '';
       document.getElementById('f-email').value = c.email || '';
@@ -1379,6 +1662,7 @@ function setupProductoForm(id) {
     const p = allProductos.find(x => x.id === id);
     if (p) {
       document.getElementById('p-nombre').value = p.nombre || '';
+      document.getElementById('p-unidad-negocio').value = p.unidad_negocio || 'lubricantes';
       document.getElementById('p-tipo').value = p.presentacion_tipo || 'Bidon';
       document.getElementById('p-cantidad').value = String(p.presentacion_cantidad) || '5';
       document.getElementById('p-unidad').value = p.unidad_medida || 'Lt';
@@ -1415,6 +1699,7 @@ async function saveProducto() {
   const cantidad = parseInt(document.getElementById('p-cantidad').value) || 0;
   const body = {
     nombre,
+    unidad_negocio: document.getElementById('p-unidad-negocio').value,
     presentacion_tipo: document.getElementById('p-tipo').value,
     presentacion_cantidad: cantidad,
     unidad_medida: document.getElementById('p-unidad').value,
@@ -1436,13 +1721,31 @@ async function saveProducto() {
 
 function editProducto(id) { showForm('producto', id); }
 async function deleteProducto(id, nombre) {
-  if (!confirm(`¿Eliminar "${nombre}"?`)) return;
+  if (!confirm(`¿Eliminar "${nombre}"?\n\nSi el producto tiene pedidos o compras asociadas, no se podrá eliminar.`)) return;
   try {
+    // Verificar si tiene items asociados
+    const pedItems = await api('GET', `pedido_items?producto_id=eq.${id}&select=id&limit=1`);
+    if (pedItems && pedItems.length > 0) {
+      showToast('❌ No se puede eliminar: el producto tiene pedidos asociados.', 'error');
+      return;
+    }
+    const cmpItems = await api('GET', `compra_items?producto_id=eq.${id}&select=id&limit=1`).catch(() => []);
+    if (cmpItems && cmpItems.length > 0) {
+      showToast('❌ No se puede eliminar: el producto tiene compras asociadas.', 'error');
+      return;
+    }
     await api('DELETE', `productos?id=eq.${id}`);
     allProductos = allProductos.filter(p => p.id !== id);
     renderProductos(allProductos);
     showToast('✅ Producto eliminado');
-  } catch (e) { showToast('❌ ' + e.message, 'error'); }
+  } catch (e) {
+    const msg = e.message || '';
+    if (msg.includes('foreign') || msg.includes('violates') || msg.includes('23503')) {
+      showToast('❌ No se puede eliminar: el producto tiene pedidos o compras asociadas.', 'error');
+    } else {
+      showToast('❌ ' + msg, 'error');
+    }
+  }
 }
 
 // ── PEDIDO FORM ──────────────────────────────────────────────
@@ -1601,7 +1904,7 @@ async function savePedido() {
       const secuencial = await getNextSecuencial(fecha);
       const yy = fecha.slice(2,4), mm = fecha.slice(5,7), dd = fecha.slice(8,10);
       const numero_pedido = `${yy}${mm}${dd}-${String(secuencial).padStart(2,'0')}`;
-      const [pedido] = await api('POST', 'pedidos', { numero_pedido, cliente_id: clienteId, fecha, estado: 'Pendiente', tipo_doc: tipoPedido, cobrado: 'Para cobrar', estado_presupuesto: tipoPedido === 'Presupuesto' ? 'Borrador' : null, total });
+      const [pedido] = await api('POST', 'pedidos', { numero_pedido, unidad_negocio: currentBU === 'consolidado' ? 'lubricantes' : currentBU, cliente_id: clienteId, fecha, estado: 'Pendiente', tipo_doc: tipoPedido, cobrado: 'Para cobrar', estado_presupuesto: tipoPedido === 'Presupuesto' ? 'Borrador' : null, total });
       for (const item of pedidoItems) {
         await api('POST', 'pedido_items', { pedido_id: pedido.id, producto_id: item.producto_id, cantidad: item.cantidad, precio_unitario: item.precio_unitario, subtotal: item.subtotal });
       }
@@ -1626,7 +1929,7 @@ async function deletePedido(id, num) {
     await api('DELETE', `pedido_items?pedido_id=eq.${id}`);
     await api('DELETE', `pedidos?id=eq.${id}`);
     allPedidos = allPedidos.filter(p => p.id !== id);
-    renderPedidos(allPedidos);
+    renderPedidos(getFilteredPedidos());
     showToast('✅ Pedido eliminado');
   } catch (e) { showToast('❌ ' + e.message, 'error'); }
 }
@@ -1643,7 +1946,7 @@ async function toggleCobrado(id, cobradoActual) {
     await api('PATCH', `pedidos?id=eq.${id}`, { cobrado: nuevo });
     const p = allPedidos.find(x => x.id === id);
     if (p) p.cobrado = nuevo;
-    renderPedidos(allPedidos);
+    renderPedidos(getFilteredPedidos());
     showToast(`✅ ${nuevo}`);
   } catch (e) { showToast('❌ ' + e.message, 'error'); }
 }
@@ -1710,15 +2013,27 @@ async function showPedidoDetail(id) {
     if (cached) { cached.tipo_doc = p.tipo_doc; cached.estado = p.estado; cached.cobrado = p.cobrado; cached.estado_presupuesto = p.estado_presupuesto; }
 
     const esPresupuesto = !p.tipo_doc || p.tipo_doc === 'Presupuesto';
-    const itemsHTML = items.map(i => `
+    const isBuloneria = p.unidad_negocio === 'buloneria';
+    const pedMoneda = p.moneda || 'ARS';
+    const itemsHTML = items.map(i => {
+      const nombre = isBuloneria ? (i.nombre_bul || '—') : (i.producto?.nombre || '—');
+      const specs = isBuloneria
+        ? [i.calidad && '• Calidad: '+i.calidad, i.trat_sup && '• Trat: '+i.trat_sup, i.diametro && '• Ø '+i.diametro, i.largo && '× '+i.largo].filter(Boolean).join(' ')
+        : `${i.producto?.presentacion_tipo||''} ${i.producto?.presentacion_cantidad||''} ${i.producto?.unidad_medida||''}`.trim();
+      const precio = isBuloneria ? fmtBulMoney(i.precio_unitario, pedMoneda) : formatCurrency(i.precio_unitario);
+      const sub = isBuloneria ? fmtBulMoney(i.subtotal, pedMoneda) : formatCurrency(i.subtotal);
+      return `
       <div class="detail-item-row">
         <div class="detail-item-info">
-          <div class="detail-item-name">${i.producto?.nombre}</div>
-          <div class="detail-item-sub">${i.producto?.presentacion_tipo} ${i.producto?.presentacion_cantidad} ${i.producto?.unidad_medida}</div>
-          <div style="font-size:11px;color:#1A3A6B;margin-top:2px;font-weight:600">${formatCurrency(i.precio_unitario)} × ${i.cantidad} unidades</div>
+          <div class="detail-item-name">${nombre}</div>
+          <div class="detail-item-sub">${specs}</div>
+          <div style="font-size:11px;color:#1A3A6B;margin-top:2px;font-weight:600">${precio} × ${i.cantidad} u.</div>
         </div>
-        <div class="detail-item-total">${formatCurrency(i.subtotal)}</div>
-      </div>`).join('');
+        <div class="detail-item-total">${sub}</div>
+      </div>`;
+    }).join('');
+    const grandTotal = isBuloneria ? fmtBulMoney(p.total, pedMoneda) : formatCurrency(p.total);
+    const monedaInfo = isBuloneria && pedMoneda === 'USD' && p.cotizacion_bna ? `<div style="font-size:11px;color:#64748B;margin-top:4px">Cotiz. BNA: $${parseFloat(p.cotizacion_bna).toLocaleString('es-AR')}</div>` : '';
 
     if (esPresupuesto) {
       // ── PRESUPUESTO VIEW ──
@@ -1748,15 +2063,16 @@ async function showPedidoDetail(id) {
           <div style="font-size:17px;font-weight:800;color:#0B1F3A;margin-bottom:8px">${p.cliente?.nombre}</div>
           <div style="font-size:13px;color:#64748B;margin-bottom:4px">CUIT: ${p.cliente?.cuit}</div>
           <div style="font-size:13px;color:#64748B;margin-bottom:4px">${p.cliente?.calle} ${p.cliente?.altura}, ${p.cliente?.localidad}</div>
-          <div style="font-size:13px;color:#64748B">Zona: ${p.cliente?.zona}</div>
+          <div style="font-size:13px;color:#64748B">Provincia: ${p.cliente?.zona}</div>
         </div>
         <div class="detail-section">
           <div class="detail-title">📦 Productos (${items.length})</div>
           ${itemsHTML}
           <div class="grand-total-row">
             <div class="grand-total-key">TOTAL</div>
-            <div class="grand-total-val">${formatCurrency(p.total)}</div>
+            <div class="grand-total-val">${grandTotal}</div>
           </div>
+          ${monedaInfo}
         </div>`;
     } else {
       // ── PEDIDO VIEW ──
@@ -1797,15 +2113,16 @@ async function showPedidoDetail(id) {
           <div style="font-size:17px;font-weight:800;color:#0B1F3A;margin-bottom:8px">${p.cliente?.nombre}</div>
           <div style="font-size:13px;color:#64748B;margin-bottom:4px">CUIT: ${p.cliente?.cuit}</div>
           <div style="font-size:13px;color:#64748B;margin-bottom:4px">${p.cliente?.calle} ${p.cliente?.altura}, ${p.cliente?.localidad}</div>
-          <div style="font-size:13px;color:#64748B">Zona: ${p.cliente?.zona}</div>
+          <div style="font-size:13px;color:#64748B">Provincia: ${p.cliente?.zona}</div>
         </div>
         <div class="detail-section">
           <div class="detail-title">📦 Productos (${items.length})</div>
           ${itemsHTML}
           <div class="grand-total-row">
             <div class="grand-total-key">TOTAL</div>
-            <div class="grand-total-val">${formatCurrency(p.total)}</div>
+            <div class="grand-total-val">${grandTotal}</div>
           </div>
+          ${monedaInfo}
         </div>`;
     }
   } catch (e) {
@@ -1954,8 +2271,13 @@ let editingCompraId = null;
 async function loadCompras() {
   try {
     allCompras = await api('GET', 'compras?order=created_at.desc&select=*,proveedor:clientes(id,nombre,localidad,zona,cuit)') || [];
-    renderCompras(allCompras);
+    renderCompras(getFilteredCompras());
   } catch (e) { console.error('Error cargando compras:', e); }
+}
+
+function getFilteredCompras() {
+  if (currentBU === 'consolidado') return allCompras;
+  return allCompras.filter(c => (c.unidad_negocio || 'lubricantes') === currentBU);
 }
 
 function renderCompras(list) {
@@ -1989,7 +2311,7 @@ function renderCompras(list) {
     </div>`).join('');
 }
 
-function filterCompras() { renderCompras(allCompras); }
+function filterCompras() { renderCompras(getFilteredCompras()); }
 
 function setupCompraForm(id) {
   editingCompraId = id || null;
@@ -2087,6 +2409,7 @@ function hideCompraProductModal() {
 }
 
 function renderCompraModalProducts(list) {
+  if (currentBU !== 'consolidado') list = list.filter(p => (p.unidad_negocio || 'lubricantes') === currentBU);
   const el = document.getElementById('compra-modal-list');
   if (!list.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:#94A3B8">Sin productos</div>'; return; }
   el.innerHTML = list.map(p => `
@@ -2146,7 +2469,7 @@ async function saveCompra() {
       const sec = (data?.length || 0) + 1;
       const yy = fecha.slice(2,4), mm = fecha.slice(5,7), dd = fecha.slice(8,10);
       const numero_compra = `C${yy}${mm}${dd}-${String(sec).padStart(2,'0')}`;
-      const [compra] = await api('POST', 'compras', { numero_compra, proveedor_id: proveedorId, fecha, total });
+      const [compra] = await api('POST', 'compras', { numero_compra, unidad_negocio: currentBU === 'consolidado' ? 'lubricantes' : currentBU, proveedor_id: proveedorId, fecha, total });
       for (const item of compraItems) {
         await api('POST', 'compra_items', { compra_id: compra.id, producto_id: item.producto_id, cantidad: item.cantidad, precio_unitario: item.precio_unitario, subtotal: item.subtotal });
       }
@@ -2167,7 +2490,7 @@ async function deleteCompra(id, num) {
     await api('DELETE', `compra_items?compra_id=eq.${id}`);
     await api('DELETE', `compras?id=eq.${id}`);
     allCompras = allCompras.filter(c => c.id !== id);
-    renderCompras(allCompras);
+    renderCompras(getFilteredCompras());
     showToast('✅ Compra eliminada');
   } catch (e) { showToast('❌ ' + e.message, 'error'); }
 }
@@ -2216,7 +2539,7 @@ async function showCompraDetail(id) {
         <div style="font-size:17px;font-weight:800;color:#0B1F3A;margin-bottom:8px">${c.proveedor?.nombre}</div>
         <div style="font-size:13px;color:#64748B;margin-bottom:4px">CUIT: ${c.proveedor?.cuit}</div>
         <div style="font-size:13px;color:#64748B;margin-bottom:4px">${c.proveedor?.calle} ${c.proveedor?.altura}, ${c.proveedor?.localidad}</div>
-        <div style="font-size:13px;color:#64748B">Zona: ${c.proveedor?.zona}</div>
+        <div style="font-size:13px;color:#64748B">Provincia: ${c.proveedor?.zona}</div>
       </div>
       <div class="detail-section">
         <div class="detail-title">📦 Productos (${items.length})</div>
@@ -2322,6 +2645,380 @@ function generarPDFCompra(id) {
       win.addEventListener('afterprint', () => { try { win.close(); window.focus(); } catch(e) {} });
     });
   }).catch(e => showToast('❌ Error al generar PDF: ' + e.message, 'error'));
+}
+
+
+// ── BULONERÍA PEDIDOS/COMPRAS ─────────────────────────────────
+const BUL_PRODUCTOS = [
+  'Conj. Espárrago c/2 Tue Hex','Espárrago','Tuerca Hexagonal',
+  'Arandela Plana','Varilla Roscada','Perno Anclaje',
+  'Bulón Hexagonal','Abrazadera U-bolt c/Accesorios','Otro'
+];
+let bulPedItems = [];
+let bulCmpItems = [];
+let bulPedEditingId = null;
+let bulCmpEditingId = null;
+let activeBulForm = null; // 'ped' or 'cmp'
+
+// ─── helpers ───────────────────────────────────────────────
+function getBulMoneda(ctx) {
+  return document.getElementById(`bul-${ctx}-moneda`)?.value || 'ARS';
+}
+function getBulCotiz(ctx) {
+  return parseFloat(document.getElementById(`bul-${ctx}-cotizacion`)?.value) || 0;
+}
+function fmtBulMoney(val, moneda) {
+  if (moneda === 'USD') return 'U$D ' + val.toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  return formatCurrency(val);
+}
+
+// ─── PEDIDO FORM ───────────────────────────────────────────
+function setupBulPedidoForm(id) {
+  bulPedEditingId = id || null;
+  bulPedItems = [];
+  const sel = document.getElementById('bul-ped-cliente');
+  sel.innerHTML = '<option value="">— Seleccionar cliente —</option>' +
+    allClientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+  document.getElementById('bul-ped-cliente-preview').classList.add('hidden');
+  document.getElementById('bul-ped-moneda').value = 'ARS';
+  document.getElementById('bul-ped-cotizacion').value = '';
+  document.getElementById('bul-ped-cotiz-wrap').style.display = '';
+  document.getElementById('bul-ped-tipo-doc').value = 'Presupuesto';
+  document.getElementById('bul-ped-save-btn').textContent = 'Crear Presupuesto';
+  document.getElementById('bul-ped-item-form-wrap').innerHTML = '';
+  renderBulItems('ped');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-form-bul-pedido').classList.add('active');
+  const header = document.getElementById('main-header');
+  header.innerHTML = `
+    <button class="header-back" onclick="cancelForm()">‹</button>
+    <div class="header-title">${id ? 'Editar' : 'Nuevo'} · 🔩 Bulonería</div>
+    <div style="width:40px"></div>`;
+  if (id) {
+    const p = allPedidos.find(x => x.id === id);
+    if (p) {
+      sel.value = p.cliente_id;
+      updateBulPedClientePreview();
+      document.getElementById('bul-ped-moneda').value = p.moneda || 'ARS';
+      document.getElementById('bul-ped-cotizacion').value = p.cotizacion_bna || '';
+      updateBulPedMoneda();
+      document.getElementById('bul-ped-tipo-doc').value = p.tipo_doc || 'Presupuesto';
+      updateBulPedTipo();
+    }
+    api('GET', `pedido_items?pedido_id=eq.${id}&select=*`).then(items => {
+      bulPedItems = (items || []).map(i => ({
+        producto: i.nombre_bul || '', calidad: i.calidad || '',
+        trat_sup: i.trat_sup || '', diametro: i.diametro || '',
+        largo: i.largo || '', precio_unitario: parseFloat(i.precio_unitario) || 0,
+        cantidad: parseInt(i.cantidad) || 1,
+        subtotal: parseFloat(i.subtotal) || 0
+      }));
+      renderBulItems('ped');
+    });
+  }
+}
+
+function updateBulPedClientePreview() {
+  const id = document.getElementById('bul-ped-cliente').value;
+  const prev = document.getElementById('bul-ped-cliente-preview');
+  if (!id) { prev.classList.add('hidden'); return; }
+  const c = allClientes.find(x => x.id === id);
+  if (c) {
+    document.getElementById('bul-ped-cliente-name').textContent = c.nombre;
+    document.getElementById('bul-ped-cliente-info').textContent = `${c.localidad} · ${c.zona}`;
+    prev.classList.remove('hidden');
+  }
+}
+
+function updateBulPedMoneda() {
+  const m = document.getElementById('bul-ped-moneda').value;
+  document.getElementById('bul-ped-cotiz-wrap').style.display = m === 'USD' ? '' : 'none';
+  recalcBulPedTotal();
+}
+
+function updateBulPedTipo() {
+  const t = document.getElementById('bul-ped-tipo-doc').value;
+  document.getElementById('bul-ped-save-btn').textContent = t === 'Presupuesto' ? 'Crear Presupuesto' : 'Crear Pedido';
+}
+
+function recalcBulPedTotal() { recalcBulTotal('ped'); }
+function recalcBulCmpTotal() { recalcBulTotal('cmp'); }
+
+function recalcBulTotal(ctx) {
+  const items = ctx === 'ped' ? bulPedItems : bulCmpItems;
+  const moneda = getBulMoneda(ctx);
+  const total = items.reduce((s, i) => s + (i.subtotal || 0), 0);
+  const totalCard = document.getElementById(`bul-${ctx}-total-card`);
+  const totalDisplay = document.getElementById(`bul-${ctx}-total-display`);
+  const totalLabel = document.getElementById(`bul-${ctx}-total-label`);
+  if (!totalCard) return;
+  if (items.length) {
+    totalCard.classList.remove('hidden');
+    totalDisplay.textContent = fmtBulMoney(total, moneda);
+    totalLabel.textContent = ctx === 'ped' ? 'Total del pedido' : 'Total de la compra';
+  } else {
+    totalCard.classList.add('hidden');
+  }
+}
+
+// ─── COMPRA FORM ───────────────────────────────────────────
+function setupBulCompraForm(id) {
+  bulCmpEditingId = id || null;
+  bulCmpItems = [];
+  const sel = document.getElementById('bul-cmp-proveedor');
+  sel.innerHTML = '<option value="">— Seleccionar proveedor —</option>' +
+    allClientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+  document.getElementById('bul-cmp-proveedor-preview').classList.add('hidden');
+  document.getElementById('bul-cmp-moneda').value = 'ARS';
+  document.getElementById('bul-cmp-cotizacion').value = '';
+  document.getElementById('bul-cmp-cotiz-wrap').style.display = 'none';
+  document.getElementById('bul-cmp-item-form-wrap').innerHTML = '';
+  renderBulItems('cmp');
+  if (id) {
+    const c = allCompras.find(x => x.id === id);
+    if (c) {
+      sel.value = c.proveedor_id;
+      updateBulCmpProveedorPreview();
+      document.getElementById('bul-cmp-moneda').value = c.moneda || 'ARS';
+      document.getElementById('bul-cmp-cotizacion').value = c.cotizacion_bna || '';
+      updateBulCmpMoneda();
+    }
+    api('GET', `compra_items?compra_id=eq.${id}&select=*`).then(items => {
+      bulCmpItems = (items || []).map(i => ({
+        producto: i.nombre_bul || '', calidad: i.calidad || '',
+        trat_sup: i.trat_sup || '', diametro: i.diametro || '',
+        largo: i.largo || '', precio_unitario: parseFloat(i.precio_unitario) || 0,
+        cantidad: parseInt(i.cantidad) || 1,
+        subtotal: parseFloat(i.subtotal) || 0
+      }));
+      renderBulItems('cmp');
+    });
+  }
+}
+
+function updateBulCmpProveedorPreview() {
+  const id = document.getElementById('bul-cmp-proveedor').value;
+  const prev = document.getElementById('bul-cmp-proveedor-preview');
+  if (!id) { prev.classList.add('hidden'); return; }
+  const c = allClientes.find(x => x.id === id);
+  if (c) {
+    document.getElementById('bul-cmp-proveedor-name').textContent = c.nombre;
+    document.getElementById('bul-cmp-proveedor-info').textContent = `${c.localidad} · ${c.zona}`;
+    prev.classList.remove('hidden');
+  }
+}
+
+function updateBulCmpMoneda() {
+  const m = document.getElementById('bul-cmp-moneda').value;
+  document.getElementById('bul-cmp-cotiz-wrap').style.display = m === 'USD' ? '' : 'none';
+  recalcBulCmpTotal();
+}
+
+// ─── ITEM FORM ─────────────────────────────────────────────
+function showBulItemForm(ctx) {
+  activeBulForm = ctx;
+  const items = ctx === 'ped' ? bulPedItems : bulCmpItems;
+  if (items.length >= 10) { showToast('Máximo 10 ítems por documento', 'error'); return; }
+  const wrap = document.getElementById(`bul-${ctx}-item-form-wrap`);
+  const prodOptions = BUL_PRODUCTOS.map(p => `<option value="${p}">${p}</option>`).join('');
+  wrap.innerHTML = `
+    <div class="bul-item-form">
+      <div style="font-size:12px;font-weight:800;color:var(--navy);margin-bottom:10px">Nuevo ítem</div>
+      <div class="bul-row full">
+        <div>
+          <label>Producto</label>
+          <select id="bul-new-producto" onchange="checkBulOtro()">
+            <option value="">— Seleccionar —</option>
+            ${prodOptions}
+          </select>
+        </div>
+      </div>
+      <div id="bul-otro-wrap" style="display:none" class="bul-row full">
+        <div><label>Descripción (Otro)</label><input type="text" id="bul-new-otro" placeholder="Describir producto..."></div>
+      </div>
+      <div class="bul-row">
+        <div><label>Calidad</label><input type="text" id="bul-new-calidad" placeholder="Ej: SAE Grade 5"></div>
+        <div><label>Trat. Superficial</label><input type="text" id="bul-new-trat" placeholder="Ej: Zincado"></div>
+      </div>
+      <div class="bul-row">
+        <div><label>Ø Diámetro</label><input type="text" id="bul-new-diam" placeholder='Ej: 1/2"'></div>
+        <div><label>Largo</label><input type="text" id="bul-new-largo" placeholder='Ej: 80mm'></div>
+      </div>
+      <div class="bul-row">
+        <div><label>Cantidad</label><input type="number" id="bul-new-cant" placeholder="1" min="1" value="1" oninput="calcBulNewSubtotal()"></div>
+        <div><label>Precio Unitario</label><input type="number" id="bul-new-precio" placeholder="0" min="0" step="0.01" oninput="calcBulNewSubtotal()"></div>
+      </div>
+      <div class="bul-subtotal" id="bul-new-subtotal">Subtotal: —</div>
+      <div class="form-actions" style="margin-top:12px;padding-top:0">
+        <button class="btn-outline" onclick="cancelBulItemForm()">Cancelar</button>
+        <button class="btn-primary" onclick="confirmBulItem()">Agregar ítem</button>
+      </div>
+    </div>`;
+  document.getElementById('bul-new-producto').focus();
+  document.getElementById(`bul-${ctx}-add-btn`).style.display = 'none';
+}
+
+function checkBulOtro() {
+  const val = document.getElementById('bul-new-producto').value;
+  document.getElementById('bul-otro-wrap').style.display = val === 'Otro' ? '' : 'none';
+}
+
+function calcBulNewSubtotal() {
+  const ctx = activeBulForm;
+  const moneda = getBulMoneda(ctx);
+  const cant = parseFloat(document.getElementById('bul-new-cant')?.value) || 0;
+  const precio = parseFloat(document.getElementById('bul-new-precio')?.value) || 0;
+  const sub = cant * precio;
+  const el = document.getElementById('bul-new-subtotal');
+  if (el) el.textContent = 'Subtotal: ' + fmtBulMoney(sub, moneda);
+}
+
+function cancelBulItemForm() {
+  const ctx = activeBulForm;
+  document.getElementById(`bul-${ctx}-item-form-wrap`).innerHTML = '';
+  document.getElementById(`bul-${ctx}-add-btn`).style.display = '';
+  activeBulForm = null;
+}
+
+function confirmBulItem() {
+  const ctx = activeBulForm;
+  const prodSel = document.getElementById('bul-new-producto').value;
+  if (!prodSel) { showToast('Seleccioná un producto', 'error'); return; }
+  const nombre = prodSel === 'Otro'
+    ? (document.getElementById('bul-new-otro').value.trim() || 'Otro')
+    : prodSel;
+  const calidad = document.getElementById('bul-new-calidad').value.trim();
+  const trat_sup = document.getElementById('bul-new-trat').value.trim();
+  const diametro = document.getElementById('bul-new-diam').value.trim();
+  const largo = document.getElementById('bul-new-largo').value.trim();
+  const cantidad = Math.max(1, parseInt(document.getElementById('bul-new-cant').value) || 1);
+  const precio_unitario = parseFloat(document.getElementById('bul-new-precio').value) || 0;
+  const subtotal = cantidad * precio_unitario;
+  const items = ctx === 'ped' ? bulPedItems : bulCmpItems;
+  items.push({ producto: nombre, calidad, trat_sup, diametro, largo, cantidad, precio_unitario, subtotal });
+  document.getElementById(`bul-${ctx}-item-form-wrap`).innerHTML = '';
+  renderBulItems(ctx);
+  activeBulForm = null;
+}
+
+function renderBulItems(ctx) {
+  const items = ctx === 'ped' ? bulPedItems : bulCmpItems;
+  const moneda = getBulMoneda(ctx);
+  const listEl = document.getElementById(`bul-${ctx}-items-list`);
+  const countEl = document.getElementById(`bul-${ctx}-items-count`);
+  const addBtn = document.getElementById(`bul-${ctx}-add-btn`);
+  if (countEl) countEl.textContent = `${items.length}/10`;
+  if (addBtn) addBtn.style.display = items.length >= 10 ? 'none' : '';
+  if (!items.length) {
+    listEl.innerHTML = `<div class="empty-items"><span style="font-size:32px">🔩</span><div class="empty-items-text">Sin ítems agregados</div></div>`;
+    recalcBulTotal(ctx);
+    return;
+  }
+  listEl.innerHTML = items.map((item, idx) => `
+    <div class="bul-item-card">
+      <div class="bul-card-title">${item.producto}</div>
+      <div class="bul-card-specs">
+        ${item.calidad ? '• Calidad: ' + item.calidad + '<br>' : ''}
+        ${item.trat_sup ? '• Trat. Sup.: ' + item.trat_sup + '<br>' : ''}
+        ${item.diametro ? '• Ø ' + item.diametro : ''} ${item.largo ? '× Largo: ' + item.largo : ''}
+      </div>
+      <div class="bul-card-bottom">
+        <div class="bul-card-price">
+          ${fmtBulMoney(item.precio_unitario, moneda)} × ${item.cantidad} u.
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="bul-card-subtotal">${fmtBulMoney(item.subtotal, moneda)}</div>
+          <button onclick="removeBulItem('${ctx}',${idx})" style="background:none;border:none;color:var(--danger);font-size:18px;cursor:pointer;padding:0">✕</button>
+        </div>
+      </div>
+    </div>`).join('');
+  recalcBulTotal(ctx);
+}
+
+function removeBulItem(ctx, idx) {
+  if (ctx === 'ped') bulPedItems.splice(idx, 1);
+  else bulCmpItems.splice(idx, 1);
+  renderBulItems(ctx);
+}
+
+// ─── SAVE ──────────────────────────────────────────────────
+async function saveBulPedido() {
+  const clienteId = document.getElementById('bul-ped-cliente').value;
+  if (!clienteId) { showToast('Seleccioná un cliente', 'error'); return; }
+  if (!bulPedItems.length) { showToast('Agregá al menos un ítem', 'error'); return; }
+  const moneda = getBulMoneda('ped');
+  const cotizacion_bna = moneda === 'USD' ? getBulCotiz('ped') : null;
+  const total = bulPedItems.reduce((s, i) => s + i.subtotal, 0);
+  const tipoPedido = document.getElementById('bul-ped-tipo-doc').value;
+  try {
+    if (bulPedEditingId) {
+      await api('PATCH', `pedidos?id=eq.${bulPedEditingId}`, { cliente_id: clienteId, total, moneda, cotizacion_bna });
+      await api('DELETE', `pedido_items?pedido_id=eq.${bulPedEditingId}`);
+      for (const item of bulPedItems) {
+        await api('POST', 'pedido_items', { pedido_id: bulPedEditingId, producto_id: null, nombre_bul: item.producto, calidad: item.calidad, trat_sup: item.trat_sup, diametro: item.diametro, largo: item.largo, cantidad: item.cantidad, precio_unitario: item.precio_unitario, subtotal: item.subtotal });
+      }
+      showToast('✅ Pedido actualizado');
+    } else {
+      const fecha = new Date().toISOString().split('T')[0];
+      const secuencial = await getNextSecuencial(fecha);
+      const yy = fecha.slice(2,4), mm = fecha.slice(5,7), dd = fecha.slice(8,10);
+      const numero_pedido = `${yy}${mm}${dd}-${String(secuencial).padStart(2,'0')}`;
+      const [pedido] = await api('POST', 'pedidos', { numero_pedido, unidad_negocio: 'buloneria', cliente_id: clienteId, fecha, estado: 'Pendiente', tipo_doc: tipoPedido, cobrado: 'Para cobrar', estado_presupuesto: tipoPedido === 'Presupuesto' ? 'Borrador' : null, total, moneda, cotizacion_bna });
+      for (const item of bulPedItems) {
+        await api('POST', 'pedido_items', { pedido_id: pedido.id, producto_id: null, nombre_bul: item.producto, calidad: item.calidad, trat_sup: item.trat_sup, diametro: item.diametro, largo: item.largo, cantidad: item.cantidad, precio_unitario: item.precio_unitario, subtotal: item.subtotal });
+      }
+      showToast('✅ ' + tipoPedido + ' creado: #' + numero_pedido);
+    }
+    await loadPedidos();
+    goTo('pedidos');
+  } catch (e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+async function saveBulCompra() {
+  const proveedorId = document.getElementById('bul-cmp-proveedor').value;
+  if (!proveedorId) { showToast('Seleccioná un proveedor', 'error'); return; }
+  if (!bulCmpItems.length) { showToast('Agregá al menos un ítem', 'error'); return; }
+  const moneda = getBulMoneda('cmp');
+  const cotizacion_bna = moneda === 'USD' ? getBulCotiz('cmp') : null;
+  const total = bulCmpItems.reduce((s, i) => s + i.subtotal, 0);
+  try {
+    if (bulCmpEditingId) {
+      await api('PATCH', `compras?id=eq.${bulCmpEditingId}`, { proveedor_id: proveedorId, total, moneda, cotizacion_bna });
+      await api('DELETE', `compra_items?compra_id=eq.${bulCmpEditingId}`);
+      for (const item of bulCmpItems) {
+        await api('POST', 'compra_items', { compra_id: bulCmpEditingId, producto_id: null, nombre_bul: item.producto, calidad: item.calidad, trat_sup: item.trat_sup, diametro: item.diametro, largo: item.largo, cantidad: item.cantidad, precio_unitario: item.precio_unitario, subtotal: item.subtotal });
+      }
+      showToast('✅ Compra actualizada');
+    } else {
+      const fecha = new Date().toISOString().split('T')[0];
+      const data = await api('GET', `compras?fecha=eq.${fecha}&select=id`);
+      const sec = (data?.length || 0) + 1;
+      const yy = fecha.slice(2,4), mm = fecha.slice(5,7), dd = fecha.slice(8,10);
+      const numero_compra = `C${yy}${mm}${dd}-${String(sec).padStart(2,'0')}`;
+      const [compra] = await api('POST', 'compras', { numero_compra, unidad_negocio: 'buloneria', proveedor_id: proveedorId, fecha, total, moneda, cotizacion_bna });
+      for (const item of bulCmpItems) {
+        await api('POST', 'compra_items', { compra_id: compra.id, producto_id: null, nombre_bul: item.producto, calidad: item.calidad, trat_sup: item.trat_sup, diametro: item.diametro, largo: item.largo, cantidad: item.cantidad, precio_unitario: item.precio_unitario, subtotal: item.subtotal });
+      }
+      showToast('✅ Compra registrada: #' + numero_compra);
+    }
+    await loadCompras();
+    goTo('compras');
+  } catch (e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+// ── UNIDADES DE NEGOCIO ──────────────────────────────────────
+function setBU(bu) {
+  currentBU = bu;
+  // Update tab styles
+  document.getElementById('bu-tab-lub').classList.toggle('active', bu === 'lubricantes');
+  document.getElementById('bu-tab-bul').classList.toggle('active', bu === 'buloneria');
+  document.getElementById('bu-tab-all').classList.toggle('active', bu === 'consolidado');
+  // Re-render lists with new filter
+  renderProductos(getFilteredProductos());
+  renderPedidos(getFilteredPedidos());
+  renderCompras(getFilteredCompras());
+  updateDashboard();
 }
 
 // ── BOOT ─────────────────────────────────────────────────────
