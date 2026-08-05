@@ -162,6 +162,7 @@ body {
 .rep-total-label { font-size: 13px; color: var(--text2); }
 .rep-total-val { font-size: 16px; font-weight: 900; color: var(--navy); }
 .rep-empty { text-align: center; padding: 40px 20px; color: var(--text2); font-size: 14px; }
+.field-hint { font-size: 11px; color: var(--text2); margin-top: 3px; }
 .bul-item-form { background: var(--card); border: 1.5px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
 .bul-item-form .bul-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
 .bul-item-form .bul-row.full { grid-template-columns: 1fr; }
@@ -653,6 +654,10 @@ body {
         <button class="quick-btn" onclick="showForm('compra')">
           <div class="quick-icon">🏪</div>
           <div class="quick-label">Nueva Compra</div>
+        </button>
+        <button class="quick-btn" onclick="goTo('config')">
+          <div class="quick-icon">⚙️</div>
+          <div class="quick-label">Configuración</div>
         </button>
       </div>
     </div>
@@ -1152,6 +1157,57 @@ body {
     <div class="content" id="detail-pedido-content"></div>
   </div>
 
+  <!-- CONFIG PAGE -->
+  <div id="page-config" class="page">
+    <div class="content">
+      <div class="form-section">
+        <div class="step-header">
+          <div class="step-badge">1</div>
+          <div class="step-title">Valores Globales</div>
+        </div>
+        <div class="field">
+          <label>A — Cotización BNA Vendedor ($/U$D) <span class="req">*</span></label>
+          <input type="number" id="cfg-cotiz-usd" placeholder="Ej: 1200" min="0" step="0.01" oninput="recalcConfigDerived()">
+        </div>
+        <div class="field">
+          <label>B — Zincado Precio $/kg <span class="req">*</span></label>
+          <input type="number" id="cfg-znc-pesos" placeholder="Ej: 850" min="0" step="0.01" oninput="recalcConfigDerived()">
+        </div>
+        <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:6px">C — Zincado Precio U$D/kg = B ÷ A</div>
+          <div style="font-size:18px;font-weight:900;color:var(--navy)" id="cfg-znc-usd-display">—</div>
+        </div>
+        <button class="btn-primary" style="width:100%;margin-top:4px" onclick="saveConfig()">💾 Guardar valores</button>
+      </div>
+
+      <div class="form-section">
+        <div class="step-header">
+          <div class="step-badge">2</div>
+          <div class="step-title">Tabla de Tuercas 01</div>
+        </div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:10px">
+          H (Costo Natural USD) es editable. G y I se calculan automáticamente.<br>
+          <strong>G = C × F &nbsp;|&nbsp; I = H + G</strong>
+        </div>
+        <div style="overflow-x:auto;border-radius:10px;border:1.5px solid var(--border)">
+          <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:520px">
+            <thead>
+              <tr style="background:var(--navy);color:#fff">
+                <th style="padding:7px 5px;text-align:left">D — Ø</th>
+                <th style="padding:7px 5px;text-align:right">F — Kg/u</th>
+                <th style="padding:7px 5px;text-align:right">G — T.Sup U$D</th>
+                <th style="padding:7px 5px;text-align:right">H — Natural U$D</th>
+                <th style="padding:7px 5px;text-align:right">I — ZN-BIC U$D</th>
+              </tr>
+            </thead>
+            <tbody id="cfg-tuercas-tbody"></tbody>
+          </table>
+        </div>
+        <button class="btn-outline" style="width:100%;margin-top:10px" onclick="saveTuercasEdits()">💾 Guardar tabla</button>
+      </div>
+    </div>
+  </div>
+
   <!-- REPORTES PAGE -->
   <div id="page-reportes" class="page">
     <div class="content">
@@ -1388,7 +1444,7 @@ function handleLogout() {
 // ── INIT ─────────────────────────────────────────────────────
 async function initApp() {
   setupGreeting();
-  await Promise.all([loadClientes(), loadProductos(), loadPedidos(), loadCompras()]);
+  await Promise.all([loadClientes(), loadProductos(), loadPedidos(), loadCompras(), loadConfig()]);
   updateDashboard();
 }
 
@@ -1415,8 +1471,9 @@ function goTo(page) {
 function updateHeader(page) {
   const header = document.getElementById('main-header');
   header.innerHTML = '';
-  const titles = { dashboard: null, clientes: 'Clientes', productos: 'Productos', pedidos: 'Pedidos', compras: 'Compras', reportes: 'Reportes' };
+  const titles = { dashboard: null, clientes: 'Clientes', productos: 'Productos', pedidos: 'Pedidos', compras: 'Compras', reportes: 'Reportes', config: 'Configuración' };
   if (page === 'reportes') setTimeout(goToReportes, 0);
+  if (page === 'config') setTimeout(goToConfig, 0);
   if (page === 'dashboard') {
     header.innerHTML = `
       <div style="width:40px"></div>
@@ -3024,47 +3081,203 @@ function updateBulCmpMoneda() {
 }
 
 // ─── ITEM FORM ─────────────────────────────────────────────
-function showBulItemForm(ctx) {
-  activeBulForm = ctx;
-  const items = ctx === 'ped' ? bulPedItems : bulCmpItems;
-  if (items.length >= 20) { showToast('Máximo 20 ítems por documento', 'error'); return; }
-  const wrap = document.getElementById(`bul-${ctx}-item-form-wrap`);
-  const prodOptions = BUL_PRODUCTOS.map(p => `<option value="${p}">${p}</option>`).join('');
-  wrap.innerHTML = `
+function bulItemFormHTML(titulo, confirmFn, item) {
+  const prodOptions = BUL_PRODUCTOS.map(p => `<option value="${p}"${item && item.producto === p ? ' selected' : ''}>${p}</option>`).join('');
+  const isTuerca = item && item.producto === 'Tuerca Hexagonal';
+  const isOtro = item && item.producto !== '' && !BUL_PRODUCTOS.includes(item.producto);
+  const tuercaOptions = TUERCAS_TABLE.map(t => `<option value="${t.diametro}"${item && item.diametro === t.diametro ? ' selected' : ''}>${t.diametro}</option>`).join('');
+  return `
     <div class="bul-item-form">
-      <div style="font-size:12px;font-weight:800;color:var(--navy);margin-bottom:10px">Nuevo ítem</div>
+      <div style="font-size:12px;font-weight:800;color:var(--navy);margin-bottom:10px">${titulo}</div>
       <div class="bul-row full">
         <div>
           <label>Producto</label>
-          <select id="bul-new-producto" onchange="checkBulOtro()">
+          <select id="bul-new-producto" onchange="onBulProductoChange()">
             <option value="">— Seleccionar —</option>
             ${prodOptions}
           </select>
         </div>
       </div>
-      <div id="bul-otro-wrap" style="display:none" class="bul-row full">
-        <div><label>Descripción (Otro)</label><input type="text" id="bul-new-otro" placeholder="Describir producto..."></div>
+      <div id="bul-otro-wrap" style="display:${isOtro ? '' : 'none'}" class="bul-row full">
+        <div><label>Descripción (Otro)</label><input type="text" id="bul-new-otro" value="${item && isOtro ? item.producto : ''}" placeholder="Describir producto..."></div>
+      </div>
+
+      <!-- CONJ. ESPÁRRAGO: selector compuesto -->
+      <div id="bul-esparrago-wrap" style="display:${item && item.producto === 'Conj. Espárrago c/2 Tue Hex' ? '' : 'none'}">
+        <div style="font-size:11px;font-weight:700;color:#C8102E;margin-bottom:6px">🔩 Calcular Conj. Espárrago</div>
+        <div class="bul-row">
+          <div><label>Costo Espárrago ($)</label>
+            <input type="number" id="bul-esp-costo" value="${item && item.costo_esparrago||''}" placeholder="0" min="0" step="0.0001" oninput="calcEsparragoCosto()">
+          </div>
+          <div><label>Cant. tuercas/espárrago</label>
+            <input type="number" id="bul-esp-cant-tue" value="${item && item.cant_tuercas||2}" min="1" step="1" oninput="calcEsparragoCosto()">
+          </div>
+        </div>
+        <div class="bul-row">
+          <div>
+            <label>Ø Tuerca</label>
+            <select id="bul-esp-tuerca-diam" onchange="calcEsparragoCosto()">
+              <option value="">— Seleccionar —</option>
+              ${TUERCAS_TABLE.map(t => `<option value="${t.diametro}"${item && item.diametro === t.diametro ? ' selected' : ''}>${t.diametro}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label>Tipo tuerca</label>
+            <select id="bul-esp-tuerca-tipo" onchange="calcEsparragoCosto()">
+              <option value="natural">Natural</option>
+              <option value="znbic">ZN-BIC</option>
+            </select>
+          </div>
+        </div>
+        <div id="bul-esp-preview" style="font-size:11px;color:var(--text2);padding:6px;background:var(--bg);border-radius:6px;display:none;margin-bottom:6px"></div>
+        <div style="font-size:10px;color:var(--text2);margin-bottom:8px">
+          Cotiz. BNA: <strong>${cfgValues.cotiz_usd ? '$'+cfgValues.cotiz_usd : '⚠'}</strong> &nbsp;|&nbsp;
+          C = <strong>${getCotizZncUsd() ? 'U$D '+getCotizZncUsd().toFixed(4)+'/kg' : '—'}</strong>
+        </div>
+      </div>
+
+      <!-- TUERCA HEXAGONAL: selector de tabla -->
+      <div id="bul-tuerca-wrap" style="display:${isTuerca ? '' : 'none'}">
+        <div style="font-size:11px;font-weight:700;color:#C8102E;margin-bottom:6px">🔩 Calcular desde tabla de tuercas</div>
+        <div class="bul-row">
+          <div>
+            <label>Ø Tuerca</label>
+            <select id="bul-tuerca-diam" onchange="applyTuercaCosto()">
+              <option value="">— Seleccionar —</option>
+              ${tuercaOptions}
+            </select>
+          </div>
+          <div>
+            <label>Tipo</label>
+            <select id="bul-tuerca-tipo" onchange="applyTuercaCosto()">
+              <option value="natural">Natural</option>
+              <option value="znbic">ZN-BIC</option>
+            </select>
+          </div>
+        </div>
+        <div id="bul-tuerca-preview" style="font-size:11px;color:var(--text2);margin-bottom:6px;padding:6px;background:var(--bg);border-radius:6px;display:none"></div>
+        <div style="font-size:10px;color:var(--text2);margin-bottom:8px">
+          Cotiz. BNA: <strong>${cfgValues.cotiz_usd ? '$' + cfgValues.cotiz_usd : '⚠ No configurada'}</strong> &nbsp;|&nbsp;
+          Zincado: <strong>${cfgValues.znc_pesos_kg ? '$' + cfgValues.znc_pesos_kg + '/kg' : '⚠ No configurado'}</strong> &nbsp;|&nbsp;
+          C = <strong>${getCotizZncUsd() ? 'U$D ' + getCotizZncUsd().toFixed(4) + '/kg' : '—'}</strong>
+        </div>
+      </div>
+
+      <div class="bul-row">
+        <div><label>Calidad</label><input type="text" id="bul-new-calidad" value="${item ? item.calidad||'' : ''}" placeholder="Ej: SAE Grade 5"></div>
+        <div><label>Trat. Superficial</label><input type="text" id="bul-new-trat" value="${item ? item.trat_sup||'' : ''}" placeholder="Ej: Zincado"></div>
       </div>
       <div class="bul-row">
-        <div><label>Calidad</label><input type="text" id="bul-new-calidad" placeholder="Ej: SAE Grade 5"></div>
-        <div><label>Trat. Superficial</label><input type="text" id="bul-new-trat" placeholder="Ej: Zincado"></div>
+        <div><label>Ø Diámetro</label><input type="text" id="bul-new-diam" value="${item ? item.diametro||'' : ''}" placeholder='Ej: 1/2"'></div>
+        <div><label>Largo</label><input type="text" id="bul-new-largo" value="${item ? item.largo||'' : ''}" placeholder='Ej: 80mm'></div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--text2);margin:8px 0 4px">Precio (en la moneda del documento)</div>
+      <div class="bul-row">
+        <div><label>Costo unit. U$D <span style="font-size:10px;color:var(--text2)">(interno)</span></label>
+          <input type="number" id="bul-new-costo" value="${item ? item.costo||'' : ''}" placeholder="0" min="0" step="0.0001" oninput="calcBulPrecioVenta()">
+        </div>
+        <div><label>Coeficiente</label>
+          <input type="number" id="bul-new-coef" value="${item ? item.coeficiente||'' : ''}" placeholder="Ej: 1.5" min="0" step="0.01" oninput="calcBulPrecioVenta()">
+        </div>
       </div>
       <div class="bul-row">
-        <div><label>Ø Diámetro</label><input type="text" id="bul-new-diam" placeholder='Ej: 1/2"'></div>
-        <div><label>Largo</label><input type="text" id="bul-new-largo" placeholder='Ej: 80mm'></div>
+        <div><label>Precio de venta unit. U$D</label>
+          <input type="number" id="bul-new-precio" value="${item ? item.precio_unitario||'' : ''}" placeholder="0" min="0" step="0.0001" oninput="calcBulNewSubtotal()" style="font-weight:800;color:var(--navy)">
+        </div>
+        <div><label>Cantidad</label>
+          <input type="number" id="bul-new-cant" value="${item ? item.cantidad : 1}" placeholder="1" min="1" oninput="calcBulNewSubtotal()">
+        </div>
       </div>
-      <div class="bul-row">
-        <div><label>Cantidad</label><input type="number" id="bul-new-cant" placeholder="1" min="1" value="1" oninput="calcBulNewSubtotal()"></div>
-        <div><label>Precio Unitario</label><input type="number" id="bul-new-precio" placeholder="0" min="0" step="0.01" oninput="calcBulNewSubtotal()"></div>
-      </div>
-      <div class="bul-subtotal" id="bul-new-subtotal">Subtotal: —</div>
+      <div class="bul-subtotal" id="bul-new-subtotal">Subtotal: ${item ? fmtBulMoney(item.subtotal, getBulMoneda(activeBulForm)) : '—'}</div>
       <div class="form-actions" style="margin-top:12px;padding-top:0">
         <button class="btn-outline" onclick="cancelBulItemForm()">Cancelar</button>
-        <button class="btn-primary" onclick="confirmBulItem()">Agregar ítem</button>
+        <button class="btn-primary" onclick="${confirmFn}">Agregar ítem</button>
       </div>
     </div>`;
+}
+
+function showBulItemForm(ctx) {
+  activeBulForm = ctx;
+  const items = ctx === 'ped' ? bulPedItems : bulCmpItems;
+  if (items.length >= 20) { showToast('Máximo 20 ítems por documento', 'error'); return; }
+  const wrap = document.getElementById(`bul-${ctx}-item-form-wrap`);
+  wrap.innerHTML = bulItemFormHTML('Nuevo ítem', 'confirmBulItem()', null);
   document.getElementById('bul-new-producto').focus();
   document.getElementById(`bul-${ctx}-add-btn`).style.display = 'none';
+}
+
+function onBulProductoChange() {
+  const val = document.getElementById('bul-new-producto').value;
+  document.getElementById('bul-otro-wrap').style.display = val === 'Otro' ? '' : 'none';
+  document.getElementById('bul-tuerca-wrap').style.display = val === 'Tuerca Hexagonal' ? '' : 'none';
+  document.getElementById('bul-esparrago-wrap').style.display = val === 'Conj. Espárrago c/2 Tue Hex' ? '' : 'none';
+  if (val === 'Tuerca Hexagonal') applyTuercaCosto();
+  if (val === 'Conj. Espárrago c/2 Tue Hex') calcEsparragoCosto();
+}
+
+function calcEsparragoCosto() {
+  const costoEspUsd = parseFloat(document.getElementById('bul-esp-costo')?.value) || 0;
+  const cantTue = parseInt(document.getElementById('bul-esp-cant-tue')?.value) || 2;
+  const diam = document.getElementById('bul-esp-tuerca-diam')?.value;
+  const tipo = document.getElementById('bul-esp-tuerca-tipo')?.value || 'natural';
+  const prev = document.getElementById('bul-esp-preview');
+  // Costo tuerca en USD: Natural=H, ZN-BIC=H+G (I)
+  let costoTuercaUsd = 0;
+  if (diam) {
+    const { naturalUsd, zncUsd } = getTuercaCostos(diam);
+    costoTuercaUsd = tipo === 'natural' ? naturalUsd : zncUsd;
+  }
+  // Costo conjunto en USD = espárrago + cant × tuerca
+  const costoConjUsd = costoEspUsd + costoTuercaUsd * cantTue;
+  // Set costo field (in USD) and other fields
+  document.getElementById('bul-new-costo').value = costoConjUsd.toFixed(4);
+  document.getElementById('bul-new-diam').value = diam || '';
+  document.getElementById('bul-new-trat').value = tipo === 'znbic' ? 'ZN-BIC' : 'Natural';
+  if (prev) {
+    if (costoConjUsd) {
+      const tipoLabel = tipo === 'znbic' ? 'ZN-BIC (H+G)' : 'Natural (H)';
+      prev.style.display = '';
+      prev.innerHTML = diam
+        ? `Espárrago: U$D ${costoEspUsd.toFixed(4)} + ${cantTue} × ${diam} ${tipoLabel}: U$D ${costoTuercaUsd.toFixed(4)} = <strong>U$D ${costoConjUsd.toFixed(4)}</strong>`
+        : `Espárrago: U$D ${costoEspUsd.toFixed(4)} (sin tuerca seleccionada)`;
+    } else {
+      prev.style.display = 'none';
+    }
+  }
+  calcBulPrecioVenta();
+}
+
+function applyTuercaCosto() {
+  const diam = document.getElementById('bul-tuerca-diam')?.value;
+  const tipo = document.getElementById('bul-tuerca-tipo')?.value || 'natural';
+  const prev = document.getElementById('bul-tuerca-preview');
+  if (!diam) { if (prev) prev.style.display = 'none'; return; }
+  const { naturalUsd, zncUsd, g, t } = getTuercaCostos(diam);
+  const costoUsd = tipo === 'natural' ? naturalUsd : zncUsd;
+  if (costoUsd && t) {
+    document.getElementById('bul-new-costo').value = costoUsd.toFixed(4);
+    document.getElementById('bul-new-diam').value = diam;
+    document.getElementById('bul-new-trat').value = tipo === 'znbic' ? 'ZN-BIC' : 'Natural';
+    calcBulPrecioVenta();
+    if (prev) {
+      prev.style.display = '';
+      if (tipo === 'natural') {
+        prev.innerHTML = `H = <strong>U$D ${naturalUsd.toFixed(4)}/u</strong>`;
+      } else {
+        prev.innerHTML = `I = H(${naturalUsd}) + G(${g.toFixed(4)}) = <strong>U$D ${costoUsd.toFixed(4)}/u</strong>`;
+      }
+    }
+  }
+}
+
+function calcBulPrecioVenta() {
+  const costo = parseFloat(document.getElementById('bul-new-costo')?.value) || 0;
+  const coef = parseFloat(document.getElementById('bul-new-coef')?.value) || 0;
+  if (costo && coef) {
+    const precio = costo * coef;
+    document.getElementById('bul-new-precio').value = precio.toFixed(4);
+  }
+  calcBulNewSubtotal();
 }
 
 function checkBulOtro() {
@@ -3101,10 +3314,14 @@ function confirmBulItem() {
   const diametro = document.getElementById('bul-new-diam').value.trim();
   const largo = document.getElementById('bul-new-largo').value.trim();
   const cantidad = Math.max(1, parseInt(document.getElementById('bul-new-cant').value) || 1);
+  const costo = parseFloat(document.getElementById('bul-new-costo').value) || 0;
+  const coeficiente = parseFloat(document.getElementById('bul-new-coef').value) || 0;
   const precio_unitario = parseFloat(document.getElementById('bul-new-precio').value) || 0;
   const subtotal = cantidad * precio_unitario;
+  const costo_esparrago = parseFloat(document.getElementById('bul-esp-costo')?.value) || 0;
+  const cant_tuercas = parseInt(document.getElementById('bul-esp-cant-tue')?.value) || 0;
   const items = ctx === 'ped' ? bulPedItems : bulCmpItems;
-  items.push({ producto: nombre, calidad, trat_sup, diametro, largo, cantidad, precio_unitario, subtotal });
+  items.push({ producto: nombre, calidad, trat_sup, diametro, largo, cantidad, costo, coeficiente, precio_unitario, subtotal, costo_esparrago, cant_tuercas });
   document.getElementById(`bul-${ctx}-item-form-wrap`).innerHTML = '';
   renderBulItems(ctx);
   activeBulForm = null;
@@ -3166,46 +3383,23 @@ function editBulItem(ctx, idx) {
   const wrap = document.getElementById(`bul-${ctx}-item-form-wrap`);
   const addBtn = document.getElementById(`bul-${ctx}-add-btn`);
   if (addBtn) addBtn.style.display = 'none';
-  const prodOptions = BUL_PRODUCTOS.map(p =>
-    `<option value="${p}"${item.producto === p ? ' selected' : ''}>${p}</option>`
-  ).join('');
+  wrap.innerHTML = bulItemFormHTML(`Editar ítem #${idx + 1}`, `confirmBulItemEdit(${idx})`, item);
+  // If Otro, set select value
   const isOtro = !BUL_PRODUCTOS.includes(item.producto) || item.producto === 'Otro';
-  wrap.innerHTML = `
-    <div class="bul-item-form">
-      <div style="font-size:12px;font-weight:800;color:var(--navy);margin-bottom:10px">Editar ítem #${idx + 1}</div>
-      <div class="bul-row full">
-        <div>
-          <label>Producto</label>
-          <select id="bul-new-producto" onchange="checkBulOtro()">
-            <option value="">— Seleccionar —</option>
-            ${prodOptions}
-          </select>
-        </div>
-      </div>
-      <div id="bul-otro-wrap" style="display:${isOtro ? '' : 'none'}" class="bul-row full">
-        <div><label>Descripción (Otro)</label><input type="text" id="bul-new-otro" value="${isOtro ? item.producto : ''}" placeholder="Describir producto..."></div>
-      </div>
-      <div class="bul-row">
-        <div><label>Calidad</label><input type="text" id="bul-new-calidad" value="${item.calidad || ''}" placeholder="Ej: SAE Grade 5"></div>
-        <div><label>Trat. Superficial</label><input type="text" id="bul-new-trat" value="${item.trat_sup || ''}" placeholder="Ej: Zincado"></div>
-      </div>
-      <div class="bul-row">
-        <div><label>Ø Diámetro</label><input type="text" id="bul-new-diam" value="${item.diametro || ''}" placeholder='Ej: 1/2"'></div>
-        <div><label>Largo</label><input type="text" id="bul-new-largo" value="${item.largo || ''}" placeholder='Ej: 80mm'></div>
-      </div>
-      <div class="bul-row">
-        <div><label>Cantidad</label><input type="number" id="bul-new-cant" value="${item.cantidad}" min="1" oninput="calcBulNewSubtotal()"></div>
-        <div><label>Precio Unitario</label><input type="number" id="bul-new-precio" value="${item.precio_unitario}" min="0" step="0.01" oninput="calcBulNewSubtotal()"></div>
-      </div>
-      <div class="bul-subtotal" id="bul-new-subtotal">Subtotal: ${fmtBulMoney(item.subtotal, getBulMoneda(ctx))}</div>
-      <div class="form-actions" style="margin-top:12px;padding-top:0">
-        <button class="btn-outline" onclick="cancelBulItemForm()">Cancelar</button>
-        <button class="btn-primary" onclick="confirmBulItemEdit(${idx})">Guardar cambios</button>
-      </div>
-    </div>`;
   if (isOtro) {
     const sel = document.getElementById('bul-new-producto');
     if (sel) sel.value = 'Otro';
+  }
+  // If tuerca, restore tuerca selector
+  if (item.producto === 'Tuerca Hexagonal') {
+    document.getElementById('bul-tuerca-wrap').style.display = '';
+  }
+  if (item.producto === 'Conj. Espárrago c/2 Tue Hex') {
+    document.getElementById('bul-esparrago-wrap').style.display = '';
+    if (item.cant_tuercas) document.getElementById('bul-esp-cant-tue').value = item.cant_tuercas;
+    if (item.costo_esparrago) document.getElementById('bul-esp-costo').value = item.costo_esparrago;
+    if (item.diametro) document.getElementById('bul-esp-tuerca-diam').value = item.diametro;
+    calcEsparragoCosto();
   }
 }
 
@@ -3221,10 +3415,14 @@ function confirmBulItemEdit(idx) {
   const diametro = document.getElementById('bul-new-diam').value.trim();
   const largo = document.getElementById('bul-new-largo').value.trim();
   const cantidad = Math.max(1, parseInt(document.getElementById('bul-new-cant').value) || 1);
+  const costo = parseFloat(document.getElementById('bul-new-costo').value) || 0;
+  const coeficiente = parseFloat(document.getElementById('bul-new-coef').value) || 0;
   const precio_unitario = parseFloat(document.getElementById('bul-new-precio').value) || 0;
   const subtotal = cantidad * precio_unitario;
   const items = ctx === 'ped' ? bulPedItems : bulCmpItems;
-  items[idx] = { producto: nombre, calidad, trat_sup, diametro, largo, cantidad, precio_unitario, subtotal };
+  const costo_esparrago = parseFloat(document.getElementById('bul-esp-costo')?.value) || 0;
+  const cant_tuercas = parseInt(document.getElementById('bul-esp-cant-tue')?.value) || 0;
+  items[idx] = { producto: nombre, calidad, trat_sup, diametro, largo, cantidad, costo, coeficiente, precio_unitario, subtotal, costo_esparrago, cant_tuercas };
   document.getElementById(`bul-${ctx}-item-form-wrap`).innerHTML = '';
   activeBulForm = null;
   renderBulItems(ctx);
@@ -3481,6 +3679,150 @@ function setCondiciones(prefix, data) {
       if (wrap) wrap.classList.remove('hidden');
     }
   }
+}
+
+
+// ── CONFIGURACIÓN / TABLA TUERCAS ────────────────────────────
+// D=diametro (fijo), F=kg/u (fijo), H=natural USD (editable, precargado)
+// G = C × F  (calculado)   donde C = znc_pesos_kg / cotiz_usd
+// I = H + G  (calculado)
+let TUERCAS_TABLE = [
+  { diametro: '1/2UNC-13',  kg: 0.0180, natural: 0.09 },
+  { diametro: '5/8UNC-11',  kg: 0.0300, natural: 0.18 },
+  { diametro: '3/4UNC-10',  kg: 0.0500, natural: 0.26 },
+  { diametro: '7/8UNC-9',   kg: 0.0750, natural: 0.45 },
+  { diametro: '1UNC-8',     kg: 0.1100, natural: 0.61 },
+  { diametro: '1,1/8UN-8',  kg: 0.1600, natural: 0.86 },
+  { diametro: '1,1/4UN-8',  kg: 0.2200, natural: 1.21 },
+  { diametro: '1,1/2UN-8',  kg: 0.3700, natural: 1.91 },
+  { diametro: '1,5/8UN-8',  kg: 0.4700, natural: 2.36 },
+  { diametro: '1,3/4UN-8',  kg: 0.5800, natural: 2.98 },
+  { diametro: '1,7/8UN-8',  kg: 0.7000, natural: 3.51 },
+  { diametro: '2UN-8',      kg: 0.8500, natural: 4.36 },
+];
+
+let cfgValues = { cotiz_usd: 0, znc_pesos_kg: 0 };
+
+// C = B / A
+function getCotizZncUsd() {
+  const a = cfgValues.cotiz_usd;
+  const b = cfgValues.znc_pesos_kg;
+  return (a && b) ? b / a : 0;
+}
+// G = C × F
+function getTsupUsd(t) {
+  return getCotizZncUsd() * t.kg;
+}
+// I = H + G
+function getCostoZncUsd(t) {
+  return t.natural + getTsupUsd(t);
+}
+
+function recalcConfigDerived() {
+  const a = parseFloat(document.getElementById('cfg-cotiz-usd').value) || 0;
+  const b = parseFloat(document.getElementById('cfg-znc-pesos').value) || 0;
+  const c = (a && b) ? (b / a) : 0;
+  const el = document.getElementById('cfg-znc-usd-display');
+  if (el) el.textContent = c ? 'U$D ' + c.toFixed(4) + '/kg' : '—';
+  renderConfigTable();
+}
+
+async function loadConfig() {
+  try {
+    const rows = await api('GET', 'configuracion?select=clave,valor') || [];
+    rows.forEach(r => {
+      if (r.clave === 'cotiz_usd') cfgValues.cotiz_usd = parseFloat(r.valor) || 0;
+      if (r.clave === 'znc_pesos_kg') cfgValues.znc_pesos_kg = parseFloat(r.valor) || 0;
+      // Load editable naturals
+      const match = r.clave.match(/^tuerca_natural_(.+)$/);
+      if (match) {
+        const t = TUERCAS_TABLE.find(x => x.diametro === match[1]);
+        if (t) t.natural = parseFloat(r.valor) || t.natural;
+      }
+    });
+  } catch (e) { console.warn('Config no disponible:', e.message); }
+}
+
+async function upsertConfig(clave, valor) {
+  try {
+    await api('POST', 'configuracion', { clave, valor: String(valor) });
+  } catch(e) {
+    try { await api('PATCH', `configuracion?clave=eq.${clave}`, { valor: String(valor) }); } catch(e2) {}
+  }
+}
+
+async function saveConfig() {
+  const cotiz = parseFloat(document.getElementById('cfg-cotiz-usd').value) || 0;
+  const znc = parseFloat(document.getElementById('cfg-znc-pesos').value) || 0;
+  if (!cotiz || !znc) { showToast('Completá cotización y precio de zincado', 'error'); return; }
+  await upsertConfig('cotiz_usd', cotiz);
+  await upsertConfig('znc_pesos_kg', znc);
+  cfgValues.cotiz_usd = cotiz;
+  cfgValues.znc_pesos_kg = znc;
+  recalcConfigDerived();
+  showToast('✅ Valores globales guardados');
+}
+
+async function saveTuercasEdits() {
+  for (const t of TUERCAS_TABLE) {
+    const inp = document.getElementById(`cfg-h-${t.diametro.replace(/[^a-z0-9]/gi,'_')}`);
+    if (inp) {
+      const val = parseFloat(inp.value) || t.natural;
+      t.natural = val;
+      await upsertConfig(`tuerca_natural_${t.diametro}`, val);
+    }
+  }
+  renderConfigTable();
+  showToast('✅ Tabla de tuercas guardada');
+}
+
+function goToConfig() {
+  document.getElementById('cfg-cotiz-usd').value = cfgValues.cotiz_usd || '';
+  document.getElementById('cfg-znc-pesos').value = cfgValues.znc_pesos_kg || '';
+  recalcConfigDerived();
+  renderConfigTable();
+}
+
+function renderConfigTable() {
+  const tbody = document.getElementById('cfg-tuercas-tbody');
+  if (!tbody) return;
+  const a = parseFloat(document.getElementById('cfg-cotiz-usd')?.value) || cfgValues.cotiz_usd || 0;
+  const b = parseFloat(document.getElementById('cfg-znc-pesos')?.value) || cfgValues.znc_pesos_kg || 0;
+  const c = (a && b) ? b / a : 0; // C = B/A = USD/kg zincado
+  tbody.innerHTML = TUERCAS_TABLE.map((t, i) => {
+    const g = c ? (c * t.kg) : null;           // G = C × F
+    const h = t.natural;                        // H editable
+    const ii = (g !== null) ? h + g : null;    // I = H + G
+    const gStr = g !== null ? 'U$D ' + g.toFixed(4) : '—';
+    const iStr = ii !== null ? 'U$D ' + ii.toFixed(4) : '—';
+    const bg = i % 2 === 0 ? '' : 'background:var(--bg)';
+    const safeId = `cfg-h-${t.diametro.replace(/[^a-z0-9]/gi,'_')}`;
+    return `<tr style="${bg}">
+      <td style="padding:6px 5px;font-weight:700;white-space:nowrap">${t.diametro}</td>
+      <td style="padding:6px 5px;text-align:right">${t.kg}</td>
+      <td style="padding:6px 5px;text-align:right;color:var(--text2)">${gStr}</td>
+      <td style="padding:6px 5px;text-align:right">
+        <input type="number" id="${safeId}" value="${h}" min="0" step="0.0001"
+          style="width:70px;padding:3px 5px;border:1.5px solid var(--border);border-radius:5px;font-size:11px;font-weight:700;color:var(--navy);background:var(--bg);text-align:right"
+          oninput="renderConfigTable()">
+      </td>
+      <td style="padding:6px 5px;text-align:right;font-weight:700;color:#C8102E">${iStr}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Get tuerca cost USD for item form
+// Returns { naturalUsd, zncUsd } based on current config
+function getTuercaCostos(diametro) {
+  const t = TUERCAS_TABLE.find(x => x.diametro === diametro);
+  if (!t) return { naturalUsd: 0, zncUsd: 0 };
+  const a = cfgValues.cotiz_usd || 0;
+  const b = cfgValues.znc_pesos_kg || 0;
+  const c = (a && b) ? b / a : 0;
+  const g = c * t.kg;           // T.SUP USD
+  const naturalUsd = t.natural; // H
+  const zncUsd = t.natural + g; // I = H + G
+  return { naturalUsd, zncUsd, g, t };
 }
 
 // ── UNIDADES DE NEGOCIO ──────────────────────────────────────
