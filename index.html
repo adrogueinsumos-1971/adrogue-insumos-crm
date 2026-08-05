@@ -141,6 +141,26 @@ body {
 .bu-tabs { display: flex; gap: 0; background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
 .bu-tab { flex: 1; padding: 9px 8px; font-size: 11px; font-weight: 700; text-align: center; border: none; background: transparent; color: var(--text2); cursor: pointer; transition: all .2s; line-height: 1.3; }
 .bu-tab.active { background: var(--navy); color: #fff; }
+.rep-tabs { display: flex; gap: 0; background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 14px; }
+.rep-tab { flex: 1; padding: 10px 8px; font-size: 12px; font-weight: 700; text-align: center; border: none; background: transparent; color: var(--text2); cursor: pointer; }
+.rep-tab.active { background: var(--navy); color: #fff; }
+.rep-filters { background: var(--card); border: 1.5px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 12px; }
+.rep-filters label { font-size: 11px; font-weight: 700; color: var(--text2); display: block; margin-bottom: 3px; }
+.rep-filters input, .rep-filters select { width: 100%; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--bg); color: var(--text); margin-bottom: 8px; }
+.rep-filters .rep-date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.rep-table-wrap { overflow-x: auto; border-radius: 10px; border: 1.5px solid var(--border); background: var(--card); margin-bottom: 12px; }
+.rep-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 420px; }
+.rep-table th { background: var(--navy); color: #fff; padding: 9px 10px; text-align: left; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.rep-table td { padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.rep-table tr:last-child td { border-bottom: none; }
+.rep-table tr:nth-child(even) td { background: var(--bg); }
+.rep-totals { background: var(--card); border: 1.5px solid var(--border); border-radius: 12px; padding: 14px; }
+.rep-totals-title { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+.rep-total-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.rep-total-row:last-child { border-bottom: none; }
+.rep-total-label { font-size: 13px; color: var(--text2); }
+.rep-total-val { font-size: 16px; font-weight: 900; color: var(--navy); }
+.rep-empty { text-align: center; padding: 40px 20px; color: var(--text2); font-size: 14px; }
 .bul-item-form { background: var(--card); border: 1.5px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
 .bul-item-form .bul-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
 .bul-item-form .bul-row.full { grid-template-columns: 1fr; }
@@ -732,7 +752,7 @@ body {
         <div class="field">
           <label>Provincia <span class="req">*</span></label>
           <select id="f-zona">
-            <option value="Buenos Aires">Buenos Aires</option>
+            <option value="Buenos Aires" selected>Buenos Aires</option>
             <option value="Catamarca">Catamarca</option>
             <option value="Chaco">Chaco</option>
             <option value="Chubut">Chubut</option>
@@ -887,6 +907,50 @@ body {
         <div class="total-card-value" id="pedido-total-display">$0</div>
       </div>
       <div class="form-section" style="margin-top:0">
+        <div class="form-section-title">🤝 Condiciones Comerciales</div>
+        <div class="field">
+          <label>Forma de pago</label>
+          <select id="ped-forma-pago" onchange="toggleFormaPagoOtro('ped-')">
+            <option value="Contado c/Transferencia">Contado con transferencia</option>
+            <option value="Contado c/Echeq">Contado con Echeq</option>
+            <option value="15 días FF c/Transferencia">15 días FF c/Transferencia</option>
+            <option value="15 días FF c/Echeq c/entrega">15 días FF c/Echeq c/entrega</option>
+            <option value="30 días FF c/Echeq c/entrega">30 días FF c/Echeq c/entrega</option>
+            <option value="30 días FF c/Transferencia">30 días FF c/Transferencia</option>
+            <option value="Anticipo 50% saldo 15 días c/Echeq">Anticipo 50% saldo 15 días c/Echeq</option>
+            <option value="otro">Otro...</option>
+          </select>
+        </div>
+        <div class="field hidden" id="ped-forma-pago-otro-wrap">
+          <label>Especificar forma de pago</label>
+          <input type="text" id="ped-forma-pago-otro" placeholder="Escribir condición...">
+        </div>
+        <div class="field">
+          <label>Plazo de entrega</label>
+          <select id="ped-plazo-entrega">
+            <option value="Inmediato">Inmediato</option>
+            <option value="7 días">7 días</option>
+            <option value="15 días">15 días</option>
+            <option value="30 días">30 días</option>
+            <option value="45 días">45 días</option>
+            <option value="60 días">60 días</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Lugar de entrega</label>
+          <select id="ped-lugar-entrega" onchange="toggleLugarOtro('ped-')">
+            <option value="Retira el cliente">Retira el cliente</option>
+            <option value="Domicilio del cliente AMBA">Domicilio del cliente AMBA</option>
+            <option value="Transporte AMBA">Transporte AMBA</option>
+            <option value="otro">Otro...</option>
+          </select>
+        </div>
+        <div class="field hidden" id="ped-lugar-entrega-otro-wrap">
+          <label>Especificar lugar de entrega</label>
+          <input type="text" id="ped-lugar-entrega-otro" placeholder="Escribir lugar...">
+        </div>
+      </div>
+      <div class="form-section" style="margin-top:0">
         <div class="form-section-title">📄 Tipo de documento</div>
         <div class="field">
           <label>Crear como <span class="req">*</span></label>
@@ -947,7 +1011,7 @@ body {
         <div class="step-header">
           <div class="step-badge">3</div>
           <div class="step-title">Ítems</div>
-          <div class="step-count" id="bul-ped-items-count">0/10</div>
+          <div class="step-count" id="bul-ped-items-count">0/20</div>
         </div>
         <div id="bul-ped-items-list">
           <div class="empty-items"><span style="font-size:32px">🔩</span><div class="empty-items-text">Sin ítems agregados</div></div>
@@ -958,6 +1022,50 @@ body {
       <div class="total-card hidden" id="bul-ped-total-card">
         <div class="total-card-label" id="bul-ped-total-label">Total del pedido</div>
         <div class="total-card-value" id="bul-ped-total-display">0</div>
+      </div>
+      <div class="form-section" style="margin-top:0">
+        <div class="form-section-title">🤝 Condiciones Comerciales</div>
+        <div class="field">
+          <label>Forma de pago</label>
+          <select id="bul-ped-forma-pago" onchange="toggleFormaPagoOtro('bul-ped-')">
+            <option value="Contado c/Transferencia">Contado con transferencia</option>
+            <option value="Contado c/Echeq">Contado con Echeq</option>
+            <option value="15 días FF c/Transferencia">15 días FF c/Transferencia</option>
+            <option value="15 días FF c/Echeq c/entrega">15 días FF c/Echeq c/entrega</option>
+            <option value="30 días FF c/Echeq c/entrega">30 días FF c/Echeq c/entrega</option>
+            <option value="30 días FF c/Transferencia">30 días FF c/Transferencia</option>
+            <option value="Anticipo 50% saldo 15 días c/Echeq">Anticipo 50% saldo 15 días c/Echeq</option>
+            <option value="otro">Otro...</option>
+          </select>
+        </div>
+        <div class="field hidden" id="bul-ped-forma-pago-otro-wrap">
+          <label>Especificar forma de pago</label>
+          <input type="text" id="bul-ped-forma-pago-otro" placeholder="Escribir condición...">
+        </div>
+        <div class="field">
+          <label>Plazo de entrega</label>
+          <select id="bul-ped-plazo-entrega">
+            <option value="Inmediato">Inmediato</option>
+            <option value="7 días">7 días</option>
+            <option value="15 días">15 días</option>
+            <option value="30 días">30 días</option>
+            <option value="45 días">45 días</option>
+            <option value="60 días">60 días</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Lugar de entrega</label>
+          <select id="bul-ped-lugar-entrega" onchange="toggleLugarOtro('bul-ped-')">
+            <option value="Retira el cliente">Retira el cliente</option>
+            <option value="Domicilio del cliente AMBA">Domicilio del cliente AMBA</option>
+            <option value="Transporte AMBA">Transporte AMBA</option>
+            <option value="otro">Otro...</option>
+          </select>
+        </div>
+        <div class="field hidden" id="bul-ped-lugar-entrega-otro-wrap">
+          <label>Especificar lugar de entrega</label>
+          <input type="text" id="bul-ped-lugar-entrega-otro" placeholder="Escribir lugar...">
+        </div>
       </div>
       <div class="form-section" style="margin-top:0">
         <div class="form-section-title">📄 Tipo de documento</div>
@@ -1020,7 +1128,7 @@ body {
         <div class="step-header">
           <div class="step-badge">3</div>
           <div class="step-title">Ítems</div>
-          <div class="step-count" id="bul-cmp-items-count">0/10</div>
+          <div class="step-count" id="bul-cmp-items-count">0/20</div>
         </div>
         <div id="bul-cmp-items-list">
           <div class="empty-items"><span style="font-size:32px">🔩</span><div class="empty-items-text">Sin ítems agregados</div></div>
@@ -1041,6 +1149,52 @@ body {
 
   <div id="page-detail-pedido" class="page">
     <div class="content" id="detail-pedido-content"></div>
+  </div>
+
+  <!-- REPORTES PAGE -->
+  <div id="page-reportes" class="page">
+    <div class="content">
+      <div class="rep-tabs">
+        <button class="rep-tab active" id="rep-tab-ventas" onclick="setRepTab('ventas')">💰 Ventas</button>
+        <button class="rep-tab" id="rep-tab-compras" onclick="setRepTab('compras')">🏪 Compras</button>
+      </div>
+      <div class="rep-filters">
+        <div class="rep-date-row">
+          <div>
+            <label>Desde</label>
+            <input type="date" id="rep-desde" onchange="renderReporte()">
+          </div>
+          <div>
+            <label>Hasta</label>
+            <input type="date" id="rep-hasta" onchange="renderReporte()">
+          </div>
+        </div>
+        <label id="rep-cliente-label">Cliente</label>
+        <select id="rep-cliente" onchange="renderReporte()">
+          <option value="">— Todos —</option>
+        </select>
+        <button class="btn-outline" style="width:100%;margin-top:4px" onclick="clearRepFiltros()">Limpiar filtros</button>
+      </div>
+      <div class="rep-table-wrap">
+        <table class="rep-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Operación</th>
+              <th id="rep-th-cliente">Cliente</th>
+              <th>Importe</th>
+              <th>Moneda</th>
+            </tr>
+          </thead>
+          <tbody id="rep-tbody"></tbody>
+        </table>
+      </div>
+      <div id="rep-empty" class="rep-empty" style="display:none">Sin registros para los filtros seleccionados</div>
+      <div class="rep-totals" id="rep-totals-box">
+        <div class="rep-totals-title">Totales</div>
+        <div id="rep-totals-content"></div>
+      </div>
+    </div>
   </div>
 
   <!-- COMPRAS PAGES -->
@@ -1140,6 +1294,10 @@ body {
     <button class="nav-item" id="nav-compras" onclick="goTo('compras')">
       <div class="nav-icon">🏪</div>
       <div class="nav-label">Compras</div>
+    </button>
+    <button class="nav-item" id="nav-reportes" onclick="goTo('reportes')">
+      <div class="nav-icon">📊</div>
+      <div class="nav-label">Reportes</div>
     </button>
   </div>
 </div>
@@ -1256,7 +1414,8 @@ function goTo(page) {
 function updateHeader(page) {
   const header = document.getElementById('main-header');
   header.innerHTML = '';
-  const titles = { dashboard: null, clientes: 'Clientes', productos: 'Productos', pedidos: 'Pedidos', compras: 'Compras' };
+  const titles = { dashboard: null, clientes: 'Clientes', productos: 'Productos', pedidos: 'Pedidos', compras: 'Compras', reportes: 'Reportes' };
+  if (page === 'reportes') setTimeout(goToReportes, 0);
   if (page === 'dashboard') {
     header.innerHTML = `
       <div style="width:40px"></div>
@@ -1589,6 +1748,8 @@ function setupClienteForm(id) {
   });
   document.getElementById('f-iva').value = 'RI';
   document.getElementById('f-zona').value = 'Buenos Aires';
+  // Ensure a value is always selected
+  if (!document.getElementById('f-zona').value) document.getElementById('f-zona').value = 'Buenos Aires';
   if (id) {
     const c = allClientes.find(x => x.id === id);
     if (c) {
@@ -1761,7 +1922,10 @@ function setupPedidoForm(id) {
   renderPedidoItems();
   if (id) {
     const p = allPedidos.find(x => x.id === id);
-    if (p) sel.value = p.cliente_id;
+    if (p) {
+      sel.value = p.cliente_id;
+      setCondiciones('ped-', p);
+    }
     updateClientePreview();
     // Load items async
     api('GET', `pedido_items?pedido_id=eq.${id}&select=*,producto:productos(*)`).then(items => {
@@ -1892,8 +2056,9 @@ async function savePedido() {
   const total = pedidoItems.reduce((s, i) => s + i.subtotal, 0);
   const tipoPedido = document.getElementById('ped-tipo-doc')?.value || 'Pedido';
   try {
+    const cond = getCondiciones('ped-');
     if (editingId) {
-      await api('PATCH', `pedidos?id=eq.${editingId}`, { cliente_id: clienteId, total });
+      await api('PATCH', `pedidos?id=eq.${editingId}`, { cliente_id: clienteId, total, ...cond });
       await api('DELETE', `pedido_items?pedido_id=eq.${editingId}`);
       for (const item of pedidoItems) {
         await api('POST', 'pedido_items', { pedido_id: editingId, producto_id: item.producto_id, cantidad: item.cantidad, precio_unitario: item.precio_unitario, subtotal: item.subtotal });
@@ -1904,7 +2069,7 @@ async function savePedido() {
       const secuencial = await getNextSecuencial(fecha);
       const yy = fecha.slice(2,4), mm = fecha.slice(5,7), dd = fecha.slice(8,10);
       const numero_pedido = `${yy}${mm}${dd}-${String(secuencial).padStart(2,'0')}`;
-      const [pedido] = await api('POST', 'pedidos', { numero_pedido, unidad_negocio: currentBU === 'consolidado' ? 'lubricantes' : currentBU, cliente_id: clienteId, fecha, estado: 'Pendiente', tipo_doc: tipoPedido, cobrado: 'Para cobrar', estado_presupuesto: tipoPedido === 'Presupuesto' ? 'Borrador' : null, total });
+      const [pedido] = await api('POST', 'pedidos', { numero_pedido, unidad_negocio: currentBU === 'consolidado' ? 'lubricantes' : currentBU, cliente_id: clienteId, fecha, estado: 'Pendiente', tipo_doc: tipoPedido, cobrado: 'Para cobrar', estado_presupuesto: tipoPedido === 'Presupuesto' ? 'Borrador' : null, total, ...cond });
       for (const item of pedidoItems) {
         await api('POST', 'pedido_items', { pedido_id: pedido.id, producto_id: item.producto_id, cantidad: item.cantidad, precio_unitario: item.precio_unitario, subtotal: item.subtotal });
       }
@@ -2141,13 +2306,34 @@ function generarPDF(id) {
     const p = arr[0];
     return api('GET', `pedido_items?pedido_id=eq.${id}&select=*,producto:productos(*)`).then(items => {
       const tipo = (!p.tipo_doc || p.tipo_doc === 'Presupuesto') ? 'PRESUPUESTO' : 'PEDIDO';
-      const filas = items.map(i => `
-        <tr>
-          <td>${i.producto?.nombre}<br><small style="color:#666">${i.producto?.presentacion_tipo} ${i.producto?.presentacion_cantidad} ${i.producto?.unidad_medida}</small></td>
-          <td style="text-align:center">${i.cantidad}</td>
-          <td style="text-align:right">${formatCurrency(i.precio_unitario)}</td>
-          <td style="text-align:right"><strong>${formatCurrency(i.subtotal)}</strong></td>
-        </tr>`).join('');
+      const isBul = p.unidad_negocio === 'buloneria';
+      const pedMoneda = p.moneda || 'ARS';
+      const fmtMoney = (val) => pedMoneda === 'USD'
+        ? 'U$D ' + parseFloat(val||0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})
+        : formatCurrency(val||0);
+      const filas = items.map(i => {
+        if (isBul) {
+          const specs = [
+            i.calidad && `Cal: ${i.calidad}`,
+            i.trat_sup && `Trat: ${i.trat_sup}`,
+            i.diametro && `Ø ${i.diametro}`,
+            i.largo && `Largo: ${i.largo}`
+          ].filter(Boolean).join(' · ');
+          return `<tr>
+            <td>${i.nombre_bul || '—'}<br><small style="color:#666">${specs}</small></td>
+            <td style="text-align:center">${i.cantidad}</td>
+            <td style="text-align:right">${fmtMoney(i.precio_unitario)}</td>
+            <td style="text-align:right"><strong>${fmtMoney(i.subtotal)}</strong></td>
+          </tr>`;
+        } else {
+          return `<tr>
+            <td>${i.producto?.nombre || '—'}<br><small style="color:#666">${i.producto?.presentacion_tipo||''} ${i.producto?.presentacion_cantidad||''} ${i.producto?.unidad_medida||''}</small></td>
+            <td style="text-align:center">${i.cantidad}</td>
+            <td style="text-align:right">${formatCurrency(i.precio_unitario)}</td>
+            <td style="text-align:right"><strong>${formatCurrency(i.subtotal)}</strong></td>
+          </tr>`;
+        }
+      }).join('');
 
       const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
         <title>${tipo} #${p.numero_pedido}</title>
@@ -2215,12 +2401,32 @@ function generarPDF(id) {
           <div class="total-row">
             <div class="total-box">
               <div class="total-label">Total</div>
-              <div class="total-val">${formatCurrency(p.total)}</div>
+              <div class="total-val">${fmtMoney(p.total)}</div>
             </div>
           </div>
         </div>
+        ${(p.forma_pago || p.plazo_entrega || p.lugar_entrega) ? `
+        <div class="section">
+          <div class="section-title">Condiciones Comerciales</div>
+          <table style="font-size:11px">
+            <tbody>
+              ${p.forma_pago ? '<tr><td style="color:#666;width:40%;padding:4px 6px">Forma de pago</td><td style="padding:4px 6px;font-weight:700">' + p.forma_pago + '</td></tr>' : ''}
+              ${p.plazo_entrega ? '<tr><td style="color:#666;padding:4px 6px">Plazo de entrega</td><td style="padding:4px 6px;font-weight:700">' + p.plazo_entrega + '</td></tr>' : ''}
+              ${p.lugar_entrega ? '<tr><td style="color:#666;padding:4px 6px">Lugar de entrega</td><td style="padding:4px 6px;font-weight:700">' + p.lugar_entrega + '</td></tr>' : ''}
+            </tbody>
+          </table>
+        </div>` : ''}
+        ${tipo === 'PRESUPUESTO' ? `
+        <div class="section">
+          <div class="section-title">Observaciones</div>
+          <div style="font-size:10px;color:#555;line-height:1.6">
+            <p>>En los productos de fabricación especial puede existir una diferencia de +10% entre la cantidad solicitada y la provista.</p>
+            <p>>>ENVIOS: DESDE 01/01/2023 TODOS LOS ENVIOS DENTRO DEL A.M.B.A. TIENEN UN COSTO DE USD 9,50+IVA. ENVIOS AL INTERIOR 100% A CARGO DEL CLIENTE.</p>
+          </div>
+        </div>` : ''}
         <div class="footer">
           ${tipo === 'PRESUPUESTO' ? 'Presupuesto válido por 7 días. Precios sujetos a variación. No incluyen IVA.' : 'Gracias por su compra.'}<br>
+          ${pedMoneda === 'USD' && p.cotizacion_bna ? 'Cotización BNA: $' + parseFloat(p.cotizacion_bna).toLocaleString('es-AR') + ' por U$D 1. ' : ''}
           Adrogué Insumos - Productos y Servicios para la Industria.
         </div>
         <script>window.onload = function(){ window.print(); }<\/script>
@@ -2705,6 +2911,7 @@ function setupBulPedidoForm(id) {
       updateBulPedMoneda();
       document.getElementById('bul-ped-tipo-doc').value = p.tipo_doc || 'Presupuesto';
       updateBulPedTipo();
+      setCondiciones('bul-ped-', p);
     }
     api('GET', `pedido_items?pedido_id=eq.${id}&select=*`).then(items => {
       bulPedItems = (items || []).map(i => ({
@@ -2819,7 +3026,7 @@ function updateBulCmpMoneda() {
 function showBulItemForm(ctx) {
   activeBulForm = ctx;
   const items = ctx === 'ped' ? bulPedItems : bulCmpItems;
-  if (items.length >= 10) { showToast('Máximo 10 ítems por documento', 'error'); return; }
+  if (items.length >= 20) { showToast('Máximo 20 ítems por documento', 'error'); return; }
   const wrap = document.getElementById(`bul-${ctx}-item-form-wrap`);
   const prodOptions = BUL_PRODUCTOS.map(p => `<option value="${p}">${p}</option>`).join('');
   wrap.innerHTML = `
@@ -2908,8 +3115,8 @@ function renderBulItems(ctx) {
   const listEl = document.getElementById(`bul-${ctx}-items-list`);
   const countEl = document.getElementById(`bul-${ctx}-items-count`);
   const addBtn = document.getElementById(`bul-${ctx}-add-btn`);
-  if (countEl) countEl.textContent = `${items.length}/10`;
-  if (addBtn) addBtn.style.display = items.length >= 10 ? 'none' : '';
+  if (countEl) countEl.textContent = `${items.length}/20`;
+  if (addBtn) addBtn.style.display = items.length >= 20 ? 'none' : '';
   if (!items.length) {
     listEl.innerHTML = `<div class="empty-items"><span style="font-size:32px">🔩</span><div class="empty-items-text">Sin ítems agregados</div></div>`;
     recalcBulTotal(ctx);
@@ -2927,18 +3134,98 @@ function renderBulItems(ctx) {
         <div class="bul-card-price">
           ${fmtBulMoney(item.precio_unitario, moneda)} × ${item.cantidad} u.
         </div>
-        <div style="display:flex;align-items:center;gap:10px">
+        <div style="display:flex;align-items:center;gap:8px">
           <div class="bul-card-subtotal">${fmtBulMoney(item.subtotal, moneda)}</div>
-          <button onclick="removeBulItem('${ctx}',${idx})" style="background:none;border:none;color:var(--danger);font-size:18px;cursor:pointer;padding:0">✕</button>
+          <button data-ctx="${ctx}" data-idx="${idx}" data-action="edit-bul" style="background:none;border:1.5px solid var(--border);border-radius:6px;color:var(--navy);font-size:12px;font-weight:700;cursor:pointer;padding:4px 8px">Editar</button>
+          <button data-ctx="${ctx}" data-idx="${idx}" data-action="remove-bul" style="background:none;border:none;color:var(--danger);font-size:20px;cursor:pointer;padding:0;line-height:1">✕</button>
         </div>
       </div>
     </div>`).join('');
+  // Attach events via delegation to avoid template literal escaping issues
+  listEl.querySelectorAll('[data-action="remove-bul"]').forEach(btn => {
+    btn.addEventListener('click', () => removeBulItem(btn.dataset.ctx, parseInt(btn.dataset.idx)));
+  });
+  listEl.querySelectorAll('[data-action="edit-bul"]').forEach(btn => {
+    btn.addEventListener('click', () => editBulItem(btn.dataset.ctx, parseInt(btn.dataset.idx)));
+  });
   recalcBulTotal(ctx);
 }
 
 function removeBulItem(ctx, idx) {
   if (ctx === 'ped') bulPedItems.splice(idx, 1);
   else bulCmpItems.splice(idx, 1);
+  renderBulItems(ctx);
+}
+
+function editBulItem(ctx, idx) {
+  const items = ctx === 'ped' ? bulPedItems : bulCmpItems;
+  const item = items[idx];
+  if (!item) return;
+  activeBulForm = ctx;
+  const wrap = document.getElementById(`bul-${ctx}-item-form-wrap`);
+  const addBtn = document.getElementById(`bul-${ctx}-add-btn`);
+  if (addBtn) addBtn.style.display = 'none';
+  const prodOptions = BUL_PRODUCTOS.map(p =>
+    `<option value="${p}"${item.producto === p ? ' selected' : ''}>${p}</option>`
+  ).join('');
+  const isOtro = !BUL_PRODUCTOS.includes(item.producto) || item.producto === 'Otro';
+  wrap.innerHTML = `
+    <div class="bul-item-form">
+      <div style="font-size:12px;font-weight:800;color:var(--navy);margin-bottom:10px">Editar ítem #${idx + 1}</div>
+      <div class="bul-row full">
+        <div>
+          <label>Producto</label>
+          <select id="bul-new-producto" onchange="checkBulOtro()">
+            <option value="">— Seleccionar —</option>
+            ${prodOptions}
+          </select>
+        </div>
+      </div>
+      <div id="bul-otro-wrap" style="display:${isOtro ? '' : 'none'}" class="bul-row full">
+        <div><label>Descripción (Otro)</label><input type="text" id="bul-new-otro" value="${isOtro ? item.producto : ''}" placeholder="Describir producto..."></div>
+      </div>
+      <div class="bul-row">
+        <div><label>Calidad</label><input type="text" id="bul-new-calidad" value="${item.calidad || ''}" placeholder="Ej: SAE Grade 5"></div>
+        <div><label>Trat. Superficial</label><input type="text" id="bul-new-trat" value="${item.trat_sup || ''}" placeholder="Ej: Zincado"></div>
+      </div>
+      <div class="bul-row">
+        <div><label>Ø Diámetro</label><input type="text" id="bul-new-diam" value="${item.diametro || ''}" placeholder='Ej: 1/2"'></div>
+        <div><label>Largo</label><input type="text" id="bul-new-largo" value="${item.largo || ''}" placeholder='Ej: 80mm'></div>
+      </div>
+      <div class="bul-row">
+        <div><label>Cantidad</label><input type="number" id="bul-new-cant" value="${item.cantidad}" min="1" oninput="calcBulNewSubtotal()"></div>
+        <div><label>Precio Unitario</label><input type="number" id="bul-new-precio" value="${item.precio_unitario}" min="0" step="0.01" oninput="calcBulNewSubtotal()"></div>
+      </div>
+      <div class="bul-subtotal" id="bul-new-subtotal">Subtotal: ${fmtBulMoney(item.subtotal, getBulMoneda(ctx))}</div>
+      <div class="form-actions" style="margin-top:12px;padding-top:0">
+        <button class="btn-outline" onclick="cancelBulItemForm()">Cancelar</button>
+        <button class="btn-primary" onclick="confirmBulItemEdit(${idx})">Guardar cambios</button>
+      </div>
+    </div>`;
+  if (isOtro) {
+    const sel = document.getElementById('bul-new-producto');
+    if (sel) sel.value = 'Otro';
+  }
+}
+
+function confirmBulItemEdit(idx) {
+  const ctx = activeBulForm;
+  const prodSel = document.getElementById('bul-new-producto').value;
+  if (!prodSel) { showToast('Seleccioná un producto', 'error'); return; }
+  const nombre = prodSel === 'Otro'
+    ? (document.getElementById('bul-new-otro').value.trim() || 'Otro')
+    : prodSel;
+  const calidad = document.getElementById('bul-new-calidad').value.trim();
+  const trat_sup = document.getElementById('bul-new-trat').value.trim();
+  const diametro = document.getElementById('bul-new-diam').value.trim();
+  const largo = document.getElementById('bul-new-largo').value.trim();
+  const cantidad = Math.max(1, parseInt(document.getElementById('bul-new-cant').value) || 1);
+  const precio_unitario = parseFloat(document.getElementById('bul-new-precio').value) || 0;
+  const subtotal = cantidad * precio_unitario;
+  const items = ctx === 'ped' ? bulPedItems : bulCmpItems;
+  items[idx] = { producto: nombre, calidad, trat_sup, diametro, largo, cantidad, precio_unitario, subtotal };
+  document.getElementById(`bul-${ctx}-item-form-wrap`).innerHTML = '';
+  activeBulForm = null;
   renderBulItems(ctx);
 }
 
@@ -2951,9 +3238,10 @@ async function saveBulPedido() {
   const cotizacion_bna = moneda === 'USD' ? getBulCotiz('ped') : null;
   const total = bulPedItems.reduce((s, i) => s + i.subtotal, 0);
   const tipoPedido = document.getElementById('bul-ped-tipo-doc').value;
+  const condBul = getCondiciones('bul-ped-');
   try {
     if (bulPedEditingId) {
-      await api('PATCH', `pedidos?id=eq.${bulPedEditingId}`, { cliente_id: clienteId, total, moneda, cotizacion_bna });
+      await api('PATCH', `pedidos?id=eq.${bulPedEditingId}`, { cliente_id: clienteId, total, moneda, cotizacion_bna, ...condBul });
       await api('DELETE', `pedido_items?pedido_id=eq.${bulPedEditingId}`);
       for (const item of bulPedItems) {
         await api('POST', 'pedido_items', { pedido_id: bulPedEditingId, producto_id: null, nombre_bul: item.producto, calidad: item.calidad, trat_sup: item.trat_sup, diametro: item.diametro, largo: item.largo, cantidad: item.cantidad, precio_unitario: item.precio_unitario, subtotal: item.subtotal });
@@ -2964,7 +3252,7 @@ async function saveBulPedido() {
       const secuencial = await getNextSecuencial(fecha);
       const yy = fecha.slice(2,4), mm = fecha.slice(5,7), dd = fecha.slice(8,10);
       const numero_pedido = `${yy}${mm}${dd}-${String(secuencial).padStart(2,'0')}`;
-      const [pedido] = await api('POST', 'pedidos', { numero_pedido, unidad_negocio: 'buloneria', cliente_id: clienteId, fecha, estado: 'Pendiente', tipo_doc: tipoPedido, cobrado: 'Para cobrar', estado_presupuesto: tipoPedido === 'Presupuesto' ? 'Borrador' : null, total, moneda, cotizacion_bna });
+      const [pedido] = await api('POST', 'pedidos', { numero_pedido, unidad_negocio: 'buloneria', cliente_id: clienteId, fecha, estado: 'Pendiente', tipo_doc: tipoPedido, cobrado: 'Para cobrar', estado_presupuesto: tipoPedido === 'Presupuesto' ? 'Borrador' : null, total, moneda, cotizacion_bna, ...condBul });
       for (const item of bulPedItems) {
         await api('POST', 'pedido_items', { pedido_id: pedido.id, producto_id: null, nombre_bul: item.producto, calidad: item.calidad, trat_sup: item.trat_sup, diametro: item.diametro, largo: item.largo, cantidad: item.cantidad, precio_unitario: item.precio_unitario, subtotal: item.subtotal });
       }
@@ -3005,6 +3293,193 @@ async function saveBulCompra() {
     await loadCompras();
     goTo('compras');
   } catch (e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+
+// ── REPORTES ──────────────────────────────────────────────────
+let currentRepTab = 'ventas';
+
+function goToReportes() {
+  // Set default dates: first day of current month to today
+  const now = new Date();
+  const y = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0'), d = String(now.getDate()).padStart(2,'0');
+  const firstDay = `${y}-${m}-01`;
+  const today = `${y}-${m}-${d}`;
+  const desdeEl = document.getElementById('rep-desde');
+  const hastaEl = document.getElementById('rep-hasta');
+  if (desdeEl && !desdeEl.value) desdeEl.value = firstDay;
+  if (hastaEl && !hastaEl.value) hastaEl.value = today;
+  setupRepClientes();
+  renderReporte();
+}
+
+function setupRepClientes() {
+  const sel = document.getElementById('rep-cliente');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— Todos —</option>';
+  if (currentRepTab === 'ventas') {
+    const clientesEnPedidos = [...new Set(allPedidos.filter(p => p.tipo_doc === 'Pedido').map(p => p.cliente?.nombre).filter(Boolean))].sort();
+    clientesEnPedidos.forEach(n => sel.innerHTML += `<option value="${n}">${n}</option>`);
+  } else {
+    const provEnCompras = [...new Set(allCompras.map(c => c.proveedor?.nombre).filter(Boolean))].sort();
+    provEnCompras.forEach(n => sel.innerHTML += `<option value="${n}">${n}</option>`);
+  }
+  sel.value = current;
+}
+
+function setRepTab(tab) {
+  currentRepTab = tab;
+  document.getElementById('rep-tab-ventas').classList.toggle('active', tab === 'ventas');
+  document.getElementById('rep-tab-compras').classList.toggle('active', tab === 'compras');
+  document.getElementById('rep-th-cliente').textContent = tab === 'ventas' ? 'Cliente' : 'Proveedor';
+  document.getElementById('rep-cliente-label').textContent = tab === 'ventas' ? 'Cliente' : 'Proveedor';
+  setupRepClientes();
+  renderReporte();
+}
+
+function clearRepFiltros() {
+  const now = new Date();
+  const y = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0');
+  document.getElementById('rep-desde').value = `${y}-${m}-01`;
+  document.getElementById('rep-hasta').value = `${y}-${m}-${String(now.getDate()).padStart(2,'0')}`;
+  document.getElementById('rep-cliente').value = '';
+  renderReporte();
+}
+
+function renderReporte() {
+  const desde = document.getElementById('rep-desde').value;
+  const hasta = document.getElementById('rep-hasta').value;
+  const clienteFiltro = document.getElementById('rep-cliente').value;
+  const tbody = document.getElementById('rep-tbody');
+  const emptyEl = document.getElementById('rep-empty');
+  const totalesContent = document.getElementById('rep-totals-content');
+
+  let rows = [];
+
+  if (currentRepTab === 'ventas') {
+    rows = allPedidos
+      .filter(p => p.tipo_doc === 'Pedido')
+      .filter(p => !desde || p.fecha >= desde)
+      .filter(p => !hasta || p.fecha <= hasta)
+      .filter(p => !clienteFiltro || p.cliente?.nombre === clienteFiltro)
+      .sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+    tbody.innerHTML = rows.map(p => {
+      const moneda = p.moneda || 'ARS';
+      const importe = moneda === 'USD'
+        ? 'U$D ' + parseFloat(p.total).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2})
+        : formatCurrency(p.total);
+      const bu = p.unidad_negocio === 'buloneria' ? '🔩' : '🛢';
+      return `<tr>
+        <td>${formatDate(p.fecha)}</td>
+        <td>${bu} #${p.numero_pedido}</td>
+        <td>${p.cliente?.nombre || '—'}</td>
+        <td style="text-align:right;font-weight:700">${importe}</td>
+        <td>${moneda}</td>
+      </tr>`;
+    }).join('');
+
+    // Totals
+    const totalARS = rows.filter(p => (p.moneda||'ARS') === 'ARS').reduce((s,p) => s + (p.total||0), 0);
+    const totalUSD = rows.filter(p => p.moneda === 'USD').reduce((s,p) => s + (p.total||0), 0);
+    let totHtml = `<div class="rep-total-row"><div class="rep-total-label">Cantidad de operaciones</div><div class="rep-total-val">${rows.length}</div></div>`;
+    if (totalARS) totHtml += `<div class="rep-total-row"><div class="rep-total-label">Total en Pesos</div><div class="rep-total-val">${formatCurrency(totalARS)}</div></div>`;
+    if (totalUSD) totHtml += `<div class="rep-total-row"><div class="rep-total-label">Total en Dólares</div><div class="rep-total-val">U$D ${totalUSD.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})}</div></div>`;
+    if (!totalARS && !totalUSD) totHtml += `<div class="rep-total-row"><div class="rep-total-label">Total</div><div class="rep-total-val">$0</div></div>`;
+    totalesContent.innerHTML = totHtml;
+
+  } else {
+    rows = allCompras
+      .filter(c => !desde || c.fecha >= desde)
+      .filter(c => !hasta || c.fecha <= hasta)
+      .filter(c => !clienteFiltro || c.proveedor?.nombre === clienteFiltro)
+      .sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+    tbody.innerHTML = rows.map(c => {
+      const moneda = c.moneda || 'ARS';
+      const importe = moneda === 'USD'
+        ? 'U$D ' + parseFloat(c.total).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2})
+        : formatCurrency(c.total);
+      const bu = c.unidad_negocio === 'buloneria' ? '🔩' : '🛢';
+      return `<tr>
+        <td>${formatDate(c.fecha)}</td>
+        <td>${bu} #${c.numero_compra}</td>
+        <td>${c.proveedor?.nombre || '—'}</td>
+        <td style="text-align:right;font-weight:700">${importe}</td>
+        <td>${moneda}</td>
+      </tr>`;
+    }).join('');
+
+    const totalARS = rows.filter(c => (c.moneda||'ARS') === 'ARS').reduce((s,c) => s + (c.total||0), 0);
+    const totalUSD = rows.filter(c => c.moneda === 'USD').reduce((s,c) => s + (c.total||0), 0);
+    let totHtml = `<div class="rep-total-row"><div class="rep-total-label">Cantidad de operaciones</div><div class="rep-total-val">${rows.length}</div></div>`;
+    if (totalARS) totHtml += `<div class="rep-total-row"><div class="rep-total-label">Total en Pesos</div><div class="rep-total-val">${formatCurrency(totalARS)}</div></div>`;
+    if (totalUSD) totHtml += `<div class="rep-total-row"><div class="rep-total-label">Total en Dólares</div><div class="rep-total-val">U$D ${totalUSD.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})}</div></div>`;
+    if (!totalARS && !totalUSD) totHtml += `<div class="rep-total-row"><div class="rep-total-label">Total</div><div class="rep-total-val">$0</div></div>`;
+    totalesContent.innerHTML = totHtml;
+  }
+
+  emptyEl.style.display = rows.length ? 'none' : '';
+  document.getElementById('rep-table-wrap') && (document.querySelector('.rep-table-wrap').style.display = rows.length ? '' : 'none');
+}
+
+
+// ── CONDICIONES COMERCIALES ───────────────────────────────────
+function toggleLugarOtro(prefix) {
+  const val = document.getElementById(`${prefix}lugar-entrega`)?.value;
+  const wrap = document.getElementById(`${prefix}lugar-entrega-otro-wrap`);
+  if (wrap) wrap.classList.toggle('hidden', val !== 'otro');
+}
+
+function toggleFormaPagoOtro(prefix) {
+  const val = document.getElementById(`${prefix}forma-pago`)?.value;
+  const wrap = document.getElementById(`${prefix}forma-pago-otro-wrap`);
+  if (wrap) wrap.classList.toggle('hidden', val !== 'otro');
+}
+
+function getCondiciones(prefix) {
+  const fp = document.getElementById(`${prefix}forma-pago`)?.value;
+  const fpOtro = document.getElementById(`${prefix}forma-pago-otro`)?.value.trim();
+  const pe = document.getElementById(`${prefix}plazo-entrega`)?.value;
+  const le = document.getElementById(`${prefix}lugar-entrega`)?.value;
+  const leOtro = document.getElementById(`${prefix}lugar-entrega-otro`)?.value.trim();
+  return {
+    forma_pago: fp === 'otro' ? (fpOtro || 'A convenir') : (fp || ''),
+    plazo_entrega: pe || '',
+    lugar_entrega: le === 'otro' ? (leOtro || 'A convenir') : (le || '')
+  };
+}
+
+function setCondiciones(prefix, data) {
+  if (!data) return;
+  const fpSel = document.getElementById(`${prefix}forma-pago`);
+  if (fpSel) {
+    const knownVals = Array.from(fpSel.options).map(o => o.value);
+    if (data.forma_pago && knownVals.includes(data.forma_pago)) {
+      fpSel.value = data.forma_pago;
+    } else if (data.forma_pago) {
+      fpSel.value = 'otro';
+      const inp = document.getElementById(`${prefix}forma-pago-otro`);
+      if (inp) inp.value = data.forma_pago;
+      const wrap = document.getElementById(`${prefix}forma-pago-otro-wrap`);
+      if (wrap) wrap.classList.remove('hidden');
+    }
+  }
+  const peSel = document.getElementById(`${prefix}plazo-entrega`);
+  if (peSel && data.plazo_entrega) peSel.value = data.plazo_entrega;
+  const leSel = document.getElementById(`${prefix}lugar-entrega`);
+  if (leSel) {
+    const knownVals = Array.from(leSel.options).map(o => o.value);
+    if (data.lugar_entrega && knownVals.includes(data.lugar_entrega)) {
+      leSel.value = data.lugar_entrega;
+    } else if (data.lugar_entrega) {
+      leSel.value = 'otro';
+      const inp = document.getElementById(`${prefix}lugar-entrega-otro`);
+      if (inp) inp.value = data.lugar_entrega;
+      const wrap = document.getElementById(`${prefix}lugar-entrega-otro-wrap`);
+      if (wrap) wrap.classList.remove('hidden');
+    }
+  }
 }
 
 // ── UNIDADES DE NEGOCIO ──────────────────────────────────────
