@@ -2,7 +2,7 @@
   "name": "Adrogué Insumos — CRM",
   "short_name": "Adrogué CRM",
   "description": "Gestión comercial de Adrogué Insumos",
-  "start_url": "./",
+  "start_url": "./adrogue-crm.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0B1F3A",
