@@ -1,7 +1,7 @@
 // Service worker de Adrogué CRM: permite instalar la app y abrirla aunque falle la red.
 // Los datos (Supabase) NUNCA se guardan en caché: siempre van a la red.
-const CACHE = 'adrogue-crm-v1';
-const SHELL = ['./adrogue-crm.html', './manifest.json', './icon-192.png', './icon-512.png', './Logo_Chico_Adrogue_Insumos.png'];
+const CACHE = 'adrogue-crm-v2';
+const SHELL = ['./', './manifest.json', './icon-192.png', './icon-512.png', './Logo_Chico_Adrogue_Insumos.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => Promise.allSettled(SHELL.map(u => c.add(u)))).then(() => self.skipWaiting()));
@@ -24,6 +24,6 @@ self.addEventListener('fetch', e => {
     fetch(req).then(res => {
       if (res && res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
       return res;
-    }).catch(() => caches.match(req).then(r => r || caches.match('./adrogue-crm.html')))
+    }).catch(() => caches.match(req).then(r => r || caches.match('./')))
   );
 });
